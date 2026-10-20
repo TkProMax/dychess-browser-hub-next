@@ -163,6 +163,53 @@
         button.disabled = false;
       }
     });
+    document.getElementById('tournamentForm').addEventListener('submit', async (event) => {
+  event.preventDefault();
+
+  const status = document.getElementById('tournamentStatus');
+  const button = document.getElementById('saveTournamentButton');
+
+  button.disabled = true;
+  status.textContent = 'Publishing tournament...';
+
+  try {
+    const name = document.getElementById('tournamentName').value.trim();
+    const lichessUrl = document.getElementById('lichessUrl').value.trim();
+    const tournamentDate = document.getElementById('tournamentDate').value;
+    const tournamentTime = document.getElementById('tournamentTime').value;
+
+    const parsedUrl = new URL(lichessUrl);
+
+    if (parsedUrl.protocol !== 'https:' ||
+        !['lichess.org', 'www.lichess.org'].includes(parsedUrl.hostname)) {
+      throw new Error('Enter a valid HTTPS Lichess tournament link.');
+    }
+
+    const { data: sessionData } = await db.auth.getSession();
+
+    if (!sessionData.session) {
+      throw new Error('Please sign in again before publishing.');
+    }
+
+    const { error } = await db
+      .from('tournaments')
+      .insert({
+        name: name,
+        lichess_url: lichessUrl,
+        tournament_date: tournamentDate,
+        tournament_time: tournamentTime
+      });
+
+    if (error) throw error;
+
+    status.textContent = 'Tournament published successfully!';
+    document.getElementById('tournamentForm').reset();
+  } catch (error) {
+    status.textContent = error.message || 'Could not publish tournament.';
+  } finally {
+    button.disabled = false;
+  }
+});
   </script>
 </body>
 </html>
