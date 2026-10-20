@@ -156,6 +156,7 @@
         }
 
         status.textContent = 'Admin access verified! Login is working.';
+        document.getElementById('tournamentDashboard').hidden = false;
       } catch (error) {
         status.textContent = error.message || 'Login failed. Please try again.';
       } finally {
