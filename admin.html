@@ -78,7 +78,34 @@
 
       <button id="loginButton" type="submit">Sign In</button>
     </form>
+<section id="tournamentDashboard" hidden>
+  <hr>
+  <h2>Tournament Management</h2>
+  <p>Add a tournament for visitors to see on the DYCHESS homepage.</p>
 
+  <form id="tournamentForm">
+    <label for="tournamentName">Tournament name</label>
+    <input id="tournamentName" type="text" required
+           placeholder="e.g. DYCHESS Weekly Arena">
+
+    <label for="lichessUrl">Lichess tournament link</label>
+    <input id="lichessUrl" type="url"
+           placeholder="https://lichess.org/tournament/..."
+           required>
+
+    <label for="tournamentDate">Tournament date</label>
+    <input id="tournamentDate" type="date" required>
+
+    <label for="tournamentTime">Start time (Nigeria time)</label>
+    <input id="tournamentTime" type="time" required>
+
+    <button id="saveTournamentButton" type="submit">
+      Publish Tournament
+    </button>
+  </form>
+
+  <p id="tournamentStatus" role="status" aria-live="polite"></p>
+</section>
     <p id="status" role="status" aria-live="polite"></p>
     <p><a href="index.html">Back to DYCHESS home</a></p>
   </main>
