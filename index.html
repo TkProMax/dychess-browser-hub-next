@@ -382,22 +382,23 @@ header {
   </div>
 </section>
 
-  <section id="tournaments">
-  <div class="container">
-    <div class="eyebrow"></div>
-    <h2></h2>
-    <p class="section-intro">
-      
-    </p>
+ <div class="tournament-cards-row">
+      <div class="tournament-area">
+        <h3>Upcoming Tournament</h3>
+        <div id="tournamentList" aria-live="polite">
+          <p>Loading tournaments...</p>
+        </div>
+      </div>
 
-    <div class="tournament-area">
-      <h3>Upcoming tournament</h3>
-      <p class="section-intro">
-       
-      </p>
-
-      <div id="tournamentList" aria-live="polite">
-        <p>Loading tournaments...</p>
+      <div class="tournament-area challenge-card">
+        <h3>Challenge Arena</h3>
+        <p>
+          Ready for your next match? Challenge a DYCHESS player
+          and prove your skills on the board.
+        </p>
+        <a class="button" href="account.html?next=challenge-arena.html">
+          Enter Challenge Arena
+        </a>
       </div>
     </div>
   </div>
