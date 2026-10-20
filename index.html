@@ -284,6 +284,56 @@
 
 loadTournaments();
   console.log('DYCHESS Supabase client initialized.');
+
+async function loadTournaments() {
+  const list = document.getElementById('tournamentList');
+  if (!list) return;
+
+  try {
+    const { data, error } = await window.dychessDB
+      .from('tournaments')
+      .select('id, name, lichess_url, tournament_date, tournament_time')
+      .order('tournament_date', { ascending: true });
+
+    if (error) throw error;
+
+    if (!data || data.length === 0) {
+      list.textContent = 'No upcoming tournaments yet. Check back soon!';
+      return;
+    }
+
+    list.replaceChildren();
+
+    data.forEach((tournament) => {
+      const card = document.createElement('div');
+      const title = document.createElement('h4');
+      title.textContent = tournament.name;
+
+      const details = document.createElement('p');
+      details.textContent =
+        (tournament.tournament_date || 'Date to be announced') +
+        (tournament.tournament_time ? ' · ' + tournament.tournament_time : '');
+
+      card.append(title, details);
+
+      if (tournament.lichess_url) {
+        const link = document.createElement('a');
+        link.href = tournament.lichess_url;
+        link.target = '_blank';
+        link.rel = 'noopener noreferrer';
+        link.textContent = 'Join on Lichess';
+        card.append(link);
+      }
+
+      list.append(card);
+    });
+  } catch (error) {
+    console.error('Could not load tournaments:', error);
+    list.textContent = 'Tournaments could not load. Please try again later.';
+  }
+}
+
+loadTournaments();
 </script>
 </body>
 </html>
