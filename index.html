@@ -263,26 +263,7 @@
     'https://rpfowuqlhboslhmvjelc.supabase.co',
     'sb_publishable_K5Fzinv7_Ac0gpaQc2C6Lg_3KstrDKY'
   );
-    card.append(title, details);
-
-      if (tournament.lichess_url) {
-        const link = document.createElement('a');
-        link.href = tournament.lichess_url;
-        link.target = '_blank';
-        link.rel = 'noopener noreferrer';
-        link.textContent = 'Join on Lichess';
-        card.append(link);
-      }
-
-      list.append(card);
-    });
-  } catch (error) {
-    console.error('Could not load tournaments:', error);
-    list.textContent = 'Tournaments could not load. Please try again later.';
-  }
-}
-
-loadTournaments();
+  
   console.log('DYCHESS Supabase client initialized.');
 
 async function loadTournaments() {
