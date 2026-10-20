@@ -525,10 +525,28 @@ async function loadTournaments() {
       title.textContent = tournament.name;
 
       const details = document.createElement('p');
-      details.textContent =
-        (tournament.tournament_date || 'Date to be announced') +
-        (tournament.tournament_time ? ' · ' + tournament.tournament_time : '');
+   
+const dateText = tournament.tournament_date
+  ? new Date(tournament.tournament_date + 'T12:00:00')
+      .toLocaleDateString('en-GB', {
+        weekday: 'long',
+        day: '2-digit',
+        month: 'long',
+        year: 'numeric'
+      })
+  : 'Date to be announced';
 
+const timeText = tournament.tournament_time
+  ? tournament.tournament_time.slice(0, 5) + ' UTC+1'
+  : 'Time to be announced';
+
+details.textContent =
+  '📅 ' + dateText + '\n' +
+  '🕗 ' + timeText + '\n' +
+ '♟ 5+0\n' +
+  'Blitz';
+
+details.style.whiteSpace = 'pre-line';
       card.append(title, details);
 
       if (tournament.lichess_url) {
