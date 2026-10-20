@@ -255,5 +255,13 @@
   <footer>
     © 2026 DYCHESS. Built for the community.
   </footer>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  window.dychessDB = window.supabase.createClient(
+    'https://rpfowuqlhboslhmvjelc.supabase.co',
+    'sb_publishable_K5Fzinv7_Ac0gpaQc2C6Lg_3KstrDKY'
+  );
+  console.log('DYCHESS Supabase client initialized.');
+</script>
 </body>
 </html>
