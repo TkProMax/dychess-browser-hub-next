@@ -157,6 +157,94 @@
       main { padding-top: 22px; }
       .hero { padding-top: 30px; }
     }
+  /* Classic DYCHESS homepage styling */
+header {
+  background: #fff;
+  border-bottom: 1px solid #d8dfd7;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.nav {
+  max-width: 1180px;
+  min-height: 74px;
+  margin: auto;
+  padding: 12px 22px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 22px;
+  flex-wrap: wrap;
+}
+
+.logo-mark {
+  display: inline-grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  background: #102319;
+  color: #d9b45b;
+  border-radius: 10px;
+}
+
+.hero {
+  background: linear-gradient(135deg, #080d0a, #102319 55%, #1b3524);
+  color: #fff;
+  padding: 54px 0;
+  border-bottom: 1px solid #c9a64b55;
+}
+
+.hero .eyebrow {
+  color: #d9b45b;
+  text-transform: uppercase;
+  letter-spacing: 3px;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.hero h1 {
+  font-size: clamp(36px, 5vw, 58px);
+  line-height: 1.1;
+  margin: 14px 0;
+}
+
+.hero p {
+  color: #d4dccd;
+  max-width: 620px;
+  font-size: 18px;
+}
+
+.button {
+  display: inline-block;
+  padding: 12px 20px;
+  border-radius: 8px;
+  background: #d9b45b;
+  color: #101510;
+  font-weight: 800;
+}
+
+.button.secondary {
+  background: transparent;
+  color: #fff;
+  border: 1px solid #c9a64b;
+}
+
+.tournament-area {
+  border: 1px solid #294332;
+  border-top: 3px solid #d9b45b;
+  border-radius: 14px;
+  padding: 26px;
+  background: #10251a;
+  margin: 22px 0 40px;
+}
+
+@media (max-width: 600px) {
+  .nav {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
   </style>
 </head>
 <body>
