@@ -1,1 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#07140e">
+  <title>Player Login | DYCHESS</title>
 
+  <style>
+    :root {
+      --bg: #07140e;
+      --panel: #10251a;
+      --gold: #d9b45b;
+      --green: #7fae3d;
+      --text: #f5f5ef;
+      --muted: #b7c1b8;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      padding: 24px;
+      display: grid;
+      place-items: center;
+      background:
+        radial-gradient(ellipse at top, #1a3422 0%, transparent 60%),
+        var(--bg);
+      color: var(--text);
+      font-family: Arial, sans-serif;
+    }
+
+    .login-card {
+      width: 100%;
+      max-width: 440px;
+      padding: 36px 28px;
+      text-align: center;
+      background: linear-gradient(145deg, #10251a, #0a170f);
+      border: 1px solid rgba(217, 180, 91, 0.65);
+      border-radius: 20px;
+      box-shadow: 0 20px 55px rgba(0, 0, 0, 0.3);
+    }
+
+    .logo {
+      color: var(--gold);
+      font-size: 25px;
+      font-weight: 800;
+      letter-spacing: 2px;
+    }
+
+    .knight {
+      display: block;
+      margin-bottom: 12px;
+      font-size: 48px;
+    }
+
+    h1 {
+      margin: 20px 0 10px;
+      font-size: 27px;
+    }
+
+    .description {
+      margin: 0 0 25px;
+      color: var(--muted);
+      font-size: 15px;
+      line-height: 1.7;
+    }
+
+    .lichess-button {
+      display: block;
+      width: 100%;
+      padding: 15px 18px;
+      border: 0;
+      border-radius: 10px;
+      background: var(--green);
+      color: #07140e;
+      font-size: 16px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .lichess-button:hover {
+      filter: brightness(1.08);
+    }
+
+    .lichess-button:disabled {
+      opacity: 0.6;
+      cursor: wait;
+    }
+
+    #status {
+      min-height: 24px;
+      margin-top: 18px;
+      color: var(--gold);
+      font-size: 14px;
+      line-height: 1.6;
+      overflow-wrap: anywhere;
+    }
+
+    .back-link {
+      display: inline-block;
+      margin-top: 22px;
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 14px;
+    }
+
+    .back-link:hover {
+      color: var(--gold);
+    }
+
+    .notice {
+      margin-top: 20px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.6;
+    }
+  </style>
+</head>
+
+<body>
+  <main class="login-card">
+    <span class="knight" aria-hidden="true">♞</span>
+    <div class="logo">DYCHESS</div>
+
+    <h1>Player Sign In</h1>
+
+    <p class="description">
+      Sign in securely with your Lichess account to access
+      DYCHESS player features and competitions.
+    </p>
+
+    <button
+      class="lichess-button"
+      id="lichessLogin"
+      type="button"
+    >
+      Continue with Lichess
+    </button>
+
+    <div id="status" role="status" aria-live="polite"></div>
+
+    <a class="back-link" href="index.html">
+      ← Back to DYCHESS Home
+    </a>
+
+    <p class="notice">
+      Your Lichess account will be verified before your DYCHESS
+      player session is created.
+    </p>
+  </main>
+
+  <script>
+    const loginButton = document.getElementById("lichessLogin");
+    const statusBox = document.getElementById("status");
+
+    loginButton.addEventListener("click", async () => {
+      statusBox.textContent =
+        "Lichess login is being connected. Please wait.";
+      loginButton.disabled = true;
+
+      try {
+        const bytes = crypto.getRandomValues(new Uint8Array(32));
+
+        const verifier = Array.from(bytes)
+          .map(byte => byte.toString(16).padStart(2, "0"))
+          .join("");
+
+        const digest = await crypto.subtle.digest(
+          "SHA-256",
+          new TextEncoder().encode(verifier)
+        );
+
+        const challenge = btoa(
+          String.fromCharCode(...new Uint8Array(digest))
+        )
+          .replace(/\+/g, "-")
+          .replace(/\//g, "_")
+          .replace(/=+$/, "");
+
+        const stateBytes = crypto.getRandomValues(
+          new Uint8Array(24)
+        );
+
+        const state = Array.from(stateBytes)
+          .map(byte => byte.toString(16).padStart(2, "0"))
+          .join("");
+
+        sessionStorage.setItem(
+          "dychess_lichess_verifier",
+          verifier
+        );
+
+        sessionStorage.setItem(
+          "dychess_lichess_state",
+          state
+        );
+
+        const redirectUri =
+          window.location.origin + window.location.pathname;
+
+        const params = new URLSearchParams({
+          response_type: "code",
+          client_id: window.location.hostname,
+          redirect_uri: redirectUri,
+          code_challenge_method: "S256",
+          code_challenge: challenge,
+          state: state,
+          scope: "challenge:read challenge:write"
+        });
+
+        window.location.href =
+          "https://lichess.org/oauth?" + params.toString();
+      } catch (error) {
+        console.error("Lichess login setup failed:", error);
+        statusBox.textContent =
+          "Could not start login. Please try again.";
+        loginButton.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>
