@@ -363,10 +363,14 @@
       bookGrid.replaceChildren(box);
     }
 
+   
     function publicBookUrl(path) {
+      if (/^https?:\/\//i.test(path)) {
+        return path;
+      }
+
       return db.storage.from(BUCKET).getPublicUrl(path).data.publicUrl;
     }
-
     async function checkAdmin() {
       adminPanel.style.display = 'none';
 
