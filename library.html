@@ -291,14 +291,24 @@
             <textarea id="bookDescription" maxlength="2000"></textarea>
           </div>
 
-          <div class="field full">
-            <label for="bookFile">Book PDF * (maximum 25 MB)</label>
+           <div class="field full">
+            <label for="bookFile">Book PDF (maximum 25 MB)</label>
             <input
               id="bookFile"
               type="file"
               accept=".pdf,application/pdf"
-              required
             >
+            <small>Optional if you provide a book link below.</small>
+          </div>
+
+          <div class="field full">
+            <label for="bookLink">Book Link (URL)</label>
+            <input
+              id="bookLink"
+              type="url"
+              placeholder="https://example.com/chess-book.pdf"
+            >
+            <small>Paste a link to the book or an online reading page.</small>
           </div>
         </div>
 
