@@ -1,338 +1,556 @@
-import "jsr:@supabase/functions-js/edge-runtime.d.ts";
-import { createClient } from "npm:@supabase/supabase-js@2";
-
-const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
-const SECRET_KEYS_RAW = Deno.env.get("SUPABASE_SECRET_KEYS");
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin":
-    "https://dychess-browser-hub-next.vercel.app",
-  "Access-Control-Allow-Headers":
-    "authorization, apikey, content-type, x-client-info, x-dychess-session",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-};
-
-function reply(body: unknown, status = 200) {
-  return Response.json(body, { status, headers: corsHeaders });
-}
-
-async function hashToken(token: string): Promise<string> {
-  const digest = await crypto.subtle.digest(
-    "SHA-256",
-    new TextEncoder().encode(token)
-  );
-
-  return Array.from(new Uint8Array(digest))
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("");
-}
-
-Deno.serve(async (req: Request) => {
-  if (req.method === "OPTIONS") {
-    return new Response(null, { status: 204, headers: corsHeaders });
-  }
-
-  if (req.method !== "POST") {
-    return reply({ error: "POST required." }, 405);
-  }
-
-  let serviceKey: string;
-
-  try {
-    if (!SUPABASE_URL || !SECRET_KEYS_RAW) {
-      throw new Error("Missing server configuration.");
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Challenge Arena | DYCHESS</title>
+  <style>
+    :root {
+      --green: #7fae3d;
+      --dark: #07140e;
+      --panel: #10251a;
+      --gold: #d9b45b;
+      --text: #f4f5ef;
+      --muted: #b7c3b8;
+      --border: #2b4333;
     }
 
-    const keys = JSON.parse(SECRET_KEYS_RAW);
-    serviceKey = keys.default;
+    * { box-sizing: border-box; }
 
-    if (typeof serviceKey !== "string" || !serviceKey) {
-      throw new Error("Missing default secret key.");
-    }
-  } catch (error) {
-    console.error("Server configuration error:", error);
-    return reply({ error: "Server configuration is incomplete." }, 500);
-  }
-
-  const token = req.headers.get("x-dychess-session");
-
-  if (!token || !/^[a-f0-9]{64}$/.test(token)) {
-    return reply({ error: "Please sign in to your DYCHESS account." }, 401);
-  }
-
-  let body: {
-    action?: string;
-    opponentUsername?: string;
-    gameFormat?: string;
-    challengeId?: number;
-    decision?: string;
-  };
-
-  try {
-    body = await req.json();
-  } catch {
-    return reply({ error: "Invalid request body." }, 400);
-  }
-
-  const db = createClient(SUPABASE_URL, serviceKey, {
-    auth: { persistSession: false, autoRefreshToken: false },
-  });
-
-  try {
-    const tokenHash = await hashToken(token);
-
-    const { data: session, error: sessionError } = await db
-      .from("lichess_player_sessions")
-      .select("player_id, expires_at, revoked_at")
-      .eq("token_hash", tokenHash)
-      .maybeSingle();
-
-    if (sessionError) {
-      console.error("Session lookup failed:", sessionError);
-      return reply({ error: "Could not verify your session." }, 500);
+    body {
+      margin: 0;
+      background: var(--dark);
+      color: var(--text);
+      font-family: Arial, sans-serif;
     }
 
-    if (
-      !session ||
-      session.revoked_at ||
-      new Date(session.expires_at).getTime() <= Date.now()
-    ) {
-      return reply({ error: "Your session has expired. Please sign in again." }, 401);
+    header {
+      background: #0b1c12;
+      border-bottom: 1px solid var(--border);
+      padding: 18px 20px;
     }
 
-    const playerId = Number(session.player_id);
-
-    const { data: me, error: meError } = await db
-      .from("players")
-      .select("id, display_name, lichess_username")
-      .eq("id", playerId)
-      .single();
-
-    if (meError || !me) {
-      return reply({ error: "Could not load your player record." }, 500);
+    .nav {
+      max-width: 1050px;
+      margin: auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      flex-wrap: wrap;
     }
 
-    const action = body.action;
+    .brand {
+      color: var(--gold);
+      font-weight: 800;
+      font-size: 22px;
+      text-decoration: none;
+    }
 
-    if (action === "list") {
-      const { data: challenges, error } = await db
-        .from("arena_challenges")
-        .select("*")
-        .or(`challenger_id.eq.${playerId},opponent_id.eq.${playerId}`)
-        .order("created_at", { ascending: false });
+    nav {
+      display: flex;
+      gap: 15px;
+      flex-wrap: wrap;
+    }
 
-      if (error) {
-        console.error("Challenge list failed:", error);
-        return reply({ error: "Could not load challenges." }, 500);
-      }
+    nav a {
+      color: var(--text);
+      text-decoration: none;
+      font-size: 14px;
+    }
 
-      const ids = [...new Set(
-        (challenges ?? []).flatMap((c) => [
-          Number(c.challenger_id),
-          Number(c.opponent_id),
-        ])
-      )];
+    main {
+      max-width: 1000px;
+      margin: 35px auto;
+      padding: 0 16px 45px;
+    }
 
-      const { data: players, error: playersError } = ids.length
-        ? await db.from("players")
-            .select("id, display_name, lichess_username")
-            .in("id", ids)
-        : { data: [], error: null };
+    .hero { margin-bottom: 25px; }
 
-      if (playersError) {
-        return reply({ error: "Could not load challenge players." }, 500);
-      }
+    .eyebrow {
+      color: var(--green);
+      font-weight: 700;
+      letter-spacing: 2px;
+      font-size: 12px;
+    }
 
-      const playerMap = new Map(
-        (players ?? []).map((p) => [Number(p.id), p])
+    h1 { margin: 9px 0; font-size: clamp(28px, 5vw, 42px); }
+    h2 { margin-top: 0; font-size: 20px; }
+    p { line-height: 1.6; }
+
+    .muted { color: var(--muted); }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 22px;
+      margin-bottom: 22px;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr auto;
+      gap: 12px;
+      align-items: end;
+    }
+
+    label {
+      display: block;
+      color: var(--muted);
+      font-size: 13px;
+      margin-bottom: 7px;
+    }
+
+    input, select {
+      width: 100%;
+      min-height: 44px;
+      background: #07140e;
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-size: 15px;
+    }
+
+    button, .button-link {
+      min-height: 42px;
+      border: 0;
+      border-radius: 8px;
+      padding: 11px 15px;
+      font-weight: 700;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      background: var(--green);
+      color: #10180a;
+    }
+
+    button.secondary, .button-link.secondary {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text);
+    }
+
+    button.danger {
+      background: #472222;
+      color: #ffe6e6;
+      border: 1px solid #784040;
+    }
+
+    button:disabled { opacity: .55; cursor: not-allowed; }
+
+    .actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 15px;
+    }
+
+    .challenge {
+      padding: 16px 0;
+      border-top: 1px solid var(--border);
+    }
+
+    .challenge:first-child { border-top: 0; }
+
+    .challenge-title {
+      font-size: 17px;
+      font-weight: 700;
+      overflow-wrap: anywhere;
+    }
+
+    .meta {
+      color: var(--muted);
+      font-size: 13px;
+      margin-top: 7px;
+      line-height: 1.6;
+    }
+
+    .status {
+      display: inline-block;
+      color: var(--gold);
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      margin-top: 7px;
+    }
+
+    #notice {
+      display: none;
+      border: 1px solid var(--border);
+      padding: 12px 14px;
+      border-radius: 8px;
+      margin-bottom: 18px;
+      line-height: 1.5;
+      overflow-wrap: anywhere;
+    }
+
+    #notice.show { display: block; }
+    #notice.error { border-color: #9b4949; color: #ffdada; }
+    #notice.success { border-color: var(--green); }
+
+    .empty {
+      color: var(--muted);
+      padding: 15px 0;
+    }
+
+    @media (max-width: 680px) {
+      .form-grid { grid-template-columns: 1fr; }
+      .panel { padding: 17px; }
+      nav { gap: 10px; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="nav">
+      <a class="brand" href="index.html">♞ DYCHESS</a>
+      <nav>
+        <a href="index.html">Home</a>
+        <a href="tournaments.html">Tournaments</a>
+        <a href="leaderboard.html">Leaderboard</a>
+        <a href="players.html">Players</a>
+        <a href="community.html">Community</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="eyebrow">DYCHESS COMMUNITY</div>
+      <h1>Challenge Arena</h1>
+      <p class="muted">Challenge another verified DYCHESS player to a friendly Lichess match.</p>
+    </section>
+
+    <div id="notice" role="status" aria-live="polite"></div>
+
+    <section class="panel">
+      <h2>Your player account</h2>
+      <p id="loginStatus" class="muted">Checking your DYCHESS session…</p>
+      <div class="actions">
+        <a class="button-link" id="signInLink" href="player-login.html?next=challenge-arena.html" hidden>Sign in with Lichess</a>
+        <button id="refreshButton" class="secondary" type="button" hidden>Refresh challenges</button>
+      </div>
+    </section>
+
+    <section class="panel" id="createPanel" hidden>
+      <h2>Send a challenge</h2>
+      <form id="challengeForm">
+        <div class="form-grid">
+          <div>
+            <label for="opponentUsername">Opponent's Lichess username</label>
+            <input id="opponentUsername" name="opponentUsername" maxlength="40" required autocomplete="off" placeholder="Enter exact username">
+          </div>
+          <div>
+            <label for="gameFormat">Time control</label>
+            <select id="gameFormat" name="gameFormat">
+              <option value="3+0">Blitz 3+0</option>
+              <option value="5+0" selected>Blitz 5+0</option>
+              <option value="10+0">Rapid 10+0</option>
+              <option value="15+10">Rapid 15+10</option>
+            </select>
+          </div>
+          <button id="sendButton" type="submit">Send challenge</button>
+        </div>
+      </form>
+      <p class="muted">Your opponent must sign in to DYCHESS with Lichess before you can challenge them.</p>
+    </section>
+
+    <section class="panel" id="incomingPanel" hidden>
+      <h2>Incoming challenges</h2>
+      <div id="incomingList"><p class="empty">No incoming challenges yet.</p></div>
+    </section>
+
+    <section class="panel" id="sentPanel" hidden>
+      <h2>Challenges you've sent</h2>
+      <div id="sentList"><p class="empty">No sent challenges yet.</p></div>
+    </section>
+  </main>
+
+  <script>
+    const SUPABASE_URL = "https://rpfowuqlhboslhmvjelc.supabase.co";
+
+    // Use the same public/publishable key already used by player-login.html.
+    // Replace this placeholder with that existing key; never use a service-role key here.
+    const SUPABASE_PUBLISHABLE_KEY = "PASTE_YOUR_EXISTING_SUPABASE_PUBLISHABLE_KEY_HERE";
+
+    const SESSION_KEY = "dychess_player_session";
+    const EXPIRY_KEY = "dychess_player_session_expiry";
+    const USERNAME_KEY = "dychess_player_username";
+
+    const notice = document.getElementById("notice");
+    const loginStatus = document.getElementById("loginStatus");
+    const signInLink = document.getElementById("signInLink");
+    const refreshButton = document.getElementById("refreshButton");
+    const createPanel = document.getElementById("createPanel");
+    const incomingPanel = document.getElementById("incomingPanel");
+    const sentPanel = document.getElementById("sentPanel");
+    const incomingList = document.getElementById("incomingList");
+    const sentList = document.getElementById("sentList");
+    const sendButton = document.getElementById("sendButton");
+
+    let sessionToken = "";
+    let currentUsername = "";
+
+    function showNotice(message, type = "success") {
+      notice.textContent = message;
+      notice.className = "show " + type;
+    }
+
+    function clearNotice() {
+      notice.textContent = "";
+      notice.className = "";
+    }
+
+    async function api(action, extra = {}) {
+      const response = await fetch(
+        SUPABASE_URL + "/functions/v1/arena-challenges",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "apikey": SUPABASE_PUBLISHABLE_KEY,
+            "x-dychess-session": sessionToken
+          },
+          body: JSON.stringify({ action, ...extra })
+        }
       );
 
-      return reply({
-        player: {
-          id: playerId,
-          username: me.display_name,
-        },
-        challenges: (challenges ?? []).map((c) => ({
-          ...c,
-          challenger_username:
-            playerMap.get(Number(c.challenger_id))?.display_name ?? "Unknown",
-          opponent_username:
-            playerMap.get(Number(c.opponent_id))?.display_name ?? "Unknown",
-          direction:
-            Number(c.challenger_id) === playerId ? "sent" : "received",
-        })),
+      const result = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(result.error || "Request failed. Please try again.");
+      }
+
+      return result;
+    }
+
+    function addText(parent, tag, text, className) {
+      const element = document.createElement(tag);
+      element.textContent = text;
+      if (className) element.className = className;
+      parent.appendChild(element);
+      return element;
+    }
+
+    function addButton(parent, label, className, onClick) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.textContent = label;
+      if (className) button.className = className;
+      button.addEventListener("click", onClick);
+      parent.appendChild(button);
+      return button;
+    }
+
+    function renderChallenge(item, direction) {
+      const wrapper = document.createElement("article");
+      wrapper.className = "challenge";
+
+      const otherPlayer = direction === "incoming"
+        ? item.challenger_username
+        : item.opponent_username;
+
+      addText(
+        wrapper,
+        "div",
+        direction === "incoming"
+          ? "Challenge from " + otherPlayer
+          : "Challenge to " + otherPlayer,
+        "challenge-title"
+      );
+
+      addText(wrapper, "div", "Time control: " + item.game_format, "meta");
+      addText(
+        wrapper,
+        "div",
+        "Created: " + new Date(item.created_at).toLocaleString(),
+        "meta"
+      );
+      addText(wrapper, "div", "Status: " + item.status, "status");
+
+      const actions = document.createElement("div");
+      actions.className = "actions";
+      wrapper.appendChild(actions);
+
+      if (direction === "incoming" && item.status === "pending") {
+        addButton(actions, "Accept", "", async () => {
+          await respond(item.id, "accept");
+        });
+        addButton(actions, "Decline", "secondary", async () => {
+          await respond(item.id, "decline");
+        });
+      }
+
+      if (direction === "sent" && item.status === "pending") {
+        addButton(actions, "Cancel challenge", "danger", async () => {
+          await cancelChallenge(item.id);
+        });
+      }
+
+      if (item.lichess_url) {
+        const link = document.createElement("a");
+        link.className = "button-link secondary";
+        link.href = item.lichess_url;
+        link.target = "_blank";
+        link.rel = "noopener noreferrer";
+        link.textContent = "Open Lichess game";
+        actions.appendChild(link);
+      }
+
+      return wrapper;
+    }
+
+    function renderList(element, items, direction) {
+      element.replaceChildren();
+
+      if (!items || items.length === 0) {
+        addText(
+          element,
+          "p",
+          direction === "incoming"
+            ? "No incoming challenges yet."
+            : "No sent challenges yet.",
+          "empty"
+        );
+        return;
+      }
+
+      items.forEach((item) => {
+        element.appendChild(renderChallenge(item, direction));
       });
     }
 
-    if (action === "create") {
-      const username = body.opponentUsername?.trim();
-      const gameFormat = body.gameFormat ?? "5+0";
+    async function loadChallenges() {
+      clearNotice();
 
-      if (
-        !username ||
-        !/^[A-Za-z0-9_]{3,30}$/.test(username)
-      ) {
-        return reply({ error: "Enter a valid Lichess username." }, 400);
+      try {
+        const result = await api("list");
+        renderList(incomingList, result.incoming, "incoming");
+        renderList(sentList, result.sent, "sent");
+      } catch (error) {
+        showNotice(error.message, "error");
       }
-
-      if (!["3+0", "5+0", "10+0"].includes(gameFormat)) {
-        return reply({ error: "Choose a supported time control." }, 400);
-      }
-
-      if (
-        username.toLowerCase() ===
-        String(me.lichess_username || me.display_name).toLowerCase()
-      ) {
-        return reply({ error: "You cannot challenge yourself." }, 400);
-      }
-
-      let { data: opponent, error: opponentError } = await db
-        .from("players")
-        .select("id, display_name, lichess_username")
-        .ilike("lichess_username", username)
-        .maybeSingle();
-
-      if (!opponent && !opponentError) {
-        const fallback = await db
-          .from("players")
-          .select("id, display_name, lichess_username")
-          .ilike("display_name", username)
-          .maybeSingle();
-
-        opponent = fallback.data;
-        opponentError = fallback.error;
-      }
-
-      if (opponentError) {
-        console.error("Opponent lookup failed:", opponentError);
-        return reply({ error: "Could not look up that player." }, 500);
-      }
-
-      if (!opponent) {
-        return reply({
-          error: "That player is not registered in the DYCHESS player list yet.",
-        }, 404);
-      }
-
-      const { data: existing, error: existingError } = await db
-        .from("arena_challenges")
-        .select("id")
-        .eq("challenger_id", playerId)
-        .eq("opponent_id", opponent.id)
-        .eq("status", "pending")
-        .maybeSingle();
-
-      if (existingError) {
-        return reply({ error: "Could not check existing challenges." }, 500);
-      }
-
-      if (existing) {
-        return reply({ error: "You already have a pending challenge to this player." }, 409);
-      }
-
-      const { data: created, error: createError } = await db
-        .from("arena_challenges")
-        .insert({
-          challenger_id: playerId,
-          opponent_id: opponent.id,
-          game_format: gameFormat,
-          status: "pending",
-        })
-        .select("*")
-        .single();
-
-      if (createError || !created) {
-        console.error("Challenge creation failed:", createError);
-        return reply({ error: "Could not send the challenge." }, 500);
-      }
-
-      return reply({
-        success: true,
-        challenge: {
-          ...created,
-          challenger_username: me.display_name,
-          opponent_username: opponent.display_name,
-          direction: "sent",
-        },
-      }, 201);
     }
 
-    if (action === "respond") {
-      const challengeId = Number(body.challengeId);
-      const decision = body.decision;
+    async function respond(challengeId, decision) {
+      clearNotice();
 
-      if (
-        !Number.isSafeInteger(challengeId) ||
-        challengeId <= 0 ||
-        !["accepted", "declined"].includes(decision ?? "")
-      ) {
-        return reply({ error: "Invalid challenge response." }, 400);
+      try {
+        const result = await api("respond", { challengeId, decision });
+        showNotice(result.message || "Response saved.");
+        await loadChallenges();
+      } catch (error) {
+        showNotice(error.message, "error");
       }
-
-      const { data: updated, error } = await db
-        .from("arena_challenges")
-        .update({
-          status: decision,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", challengeId)
-        .eq("opponent_id", playerId)
-        .eq("status", "pending")
-        .select("*")
-        .maybeSingle();
-
-      if (error) {
-        console.error("Challenge response failed:", error);
-        return reply({ error: "Could not update the challenge." }, 500);
-      }
-
-      if (!updated) {
-        return reply({
-          error: "Challenge not found, already answered, or you are not the invited player.",
-        }, 409);
-      }
-
-      return reply({ success: true, challenge: updated });
     }
 
-    if (action === "cancel") {
-      const challengeId = Number(body.challengeId);
+    async function cancelChallenge(challengeId) {
+      if (!confirm("Cancel this pending challenge?")) return;
 
-      if (!Number.isSafeInteger(challengeId) || challengeId <= 0) {
-        return reply({ error: "Invalid challenge ID." }, 400);
+      clearNotice();
+
+      try {
+        const result = await api("cancel", { challengeId });
+        showNotice(result.message || "Challenge cancelled.");
+        await loadChallenges();
+      } catch (error) {
+        showNotice(error.message, "error");
       }
-
-      const { data: updated, error } = await db
-        .from("arena_challenges")
-        .update({
-          status: "cancelled",
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", challengeId)
-        .eq("challenger_id", playerId)
-        .eq("status", "pending")
-        .select("id, status")
-        .maybeSingle();
-
-      if (error) {
-        console.error("Challenge cancellation failed:", error);
-        return reply({ error: "Could not cancel the challenge." }, 500);
-      }
-
-      if (!updated) {
-        return reply({
-          error: "Challenge not found, already answered, or you are not the challenger.",
-        }, 409);
-      }
-
-      return reply({ success: true, challenge: updated });
     }
 
-    return reply({
-      error: "Unknown action. Use list, create, respond, or cancel.",
-    }, 400);
-  } catch (error) {
-    console.error("Arena request failed:", error);
-    return reply({ error: "An unexpected server error occurred." }, 500);
-  }
-});
+    document.getElementById("challengeForm").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      clearNotice();
+
+      const opponentUsername =
+        document.getElementById("opponentUsername").value.trim();
+      const gameFormat =
+        document.getElementById("gameFormat").value;
+
+      sendButton.disabled = true;
+      sendButton.textContent = "Sending…";
+
+      try {
+        const result = await api("create", {
+          opponentUsername,
+          gameFormat
+        });
+
+        document.getElementById("opponentUsername").value = "";
+        showNotice(result.message || "Challenge sent.");
+        await loadChallenges();
+      } catch (error) {
+        showNotice(error.message, "error");
+      } finally {
+        sendButton.disabled = false;
+        sendButton.textContent = "Send challenge";
+      }
+    });
+
+    refreshButton.addEventListener("click", loadChallenges);
+
+    async function initialize() {
+      sessionToken = localStorage.getItem(SESSION_KEY) || "";
+      currentUsername = localStorage.getItem(USERNAME_KEY) || "";
+
+      const expiry = Number(localStorage.getItem(EXPIRY_KEY) || "0");
+
+      if (!sessionToken || (expiry && expiry <= Date.now())) {
+        sessionToken = "";
+        loginStatus.textContent =
+          "Sign in with your Lichess account to send and receive challenges.";
+        signInLink.hidden = false;
+        createPanel.hidden = true;
+        incomingPanel.hidden = true;
+        sentPanel.hidden = true;
+        return;
+      }
+
+      loginStatus.textContent = currentUsername
+        ? "Welcome, " + currentUsername + "! Checking your session…"
+        : "Checking your DYCHESS session…";
+
+      try {
+        await api("list");
+        loginStatus.textContent = currentUsername
+          ? "Welcome, " + currentUsername + "! You are signed in."
+          : "You are signed in to DYCHESS.";
+
+        signInLink.hidden = true;
+        refreshButton.hidden = false;
+        createPanel.hidden = false;
+        incomingPanel.hidden = false;
+        sentPanel.hidden = false;
+
+        await loadChallenges();
+      } catch (error) {
+        if (/session|sign in|expired|verified/i.test(error.message)) {
+          sessionToken = "";
+          loginStatus.textContent =
+            "Your session could not be verified. Please sign in again.";
+          signInLink.hidden = false;
+          createPanel.hidden = true;
+          incomingPanel.hidden = true;
+          sentPanel.hidden = true;
+        } else {
+          loginStatus.textContent =
+            "Signed in, but the Challenge Arena could not load.";
+          signInLink.hidden = true;
+          refreshButton.hidden = false;
+          createPanel.hidden = false;
+          incomingPanel.hidden = false;
+          sentPanel.hidden = false;
+          showNotice(error.message, "error");
+        }
+      }
+    }
+
+    initialize();
+  </script>
+</body>
+</html>
