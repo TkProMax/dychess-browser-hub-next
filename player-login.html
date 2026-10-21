@@ -330,7 +330,8 @@ const tokenResponse = await fetch("https://lichess.org/api/token", {
       loginButton.disabled = false;
       loginButton.textContent = "Signed in";
       logoutButton.hidden = false;
-
+      
+      window.location.href = nextPage;
     } catch (error) {
       console.error("Lichess login failed:", error);
 
