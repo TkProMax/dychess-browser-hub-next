@@ -278,16 +278,42 @@
         Follow the knockout bracket, submit match winners, and confirm or dispute results.
       </p>
 
-      <div id="cupAdminControls" hidden>
-        <button type="button" id="createCupButton">
-          Create DYCHESS CUP
-        </button>
-        <p id="cupAdminMessage" role="status"></p>
-      </div>
-      <div id="cupTournamentArea">
-        <p class="empty">Loading DYCHESS CUP...</p>
-      </div>
-    </section>
+    
+<div id="cupAdminControls" hidden>
+  <button type="button" id="createCupButton">
+    Create DYCHESS CUP
+  </button>
+
+  <hr>
+
+  <h3>Admin: Record Match Result</h3>
+
+  <label for="cupResultMatchId">Match ID</label>
+  <input
+    type="number"
+    id="cupResultMatchId"
+    min="1"
+    placeholder="Enter match ID"
+  >
+
+  <label for="cupResultWinner">Winner's DYCHESS username</label>
+  <input
+    type="text"
+    id="cupResultWinner"
+    placeholder="e.g. Hope321"
+  >
+
+  <button type="button" id="recordCupResultButton">
+    Record Winner
+  </button>
+
+  <p id="cupAdminMessage" role="status"></p>
+</div>
+
+<div id="cupTournamentArea">
+  <p class="empty">Loading DYCHESS CUP...</p>
+</div>
+</section>
     
   </main>
 
