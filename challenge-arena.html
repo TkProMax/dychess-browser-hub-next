@@ -297,6 +297,11 @@
     // Use the same public/publishable key already used by player-login.html.
     // Replace this placeholder with that existing key; never use a service-role key here.
     const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_K5Fzinv7_Ac0gpaQc2C6Lg_3KstrDKY";
+    
+    const adminDb = window.supabase.createClient(
+      SUPABASE_URL,
+      SUPABASE_PUBLISHABLE_KEY
+    );
 
     const SESSION_KEY = "dychess_player_session";
     const EXPIRY_KEY = "dychess_player_session_expiry";
