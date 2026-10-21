@@ -528,28 +528,45 @@
         return;
       }
 
+    
       const title = document.getElementById('bookTitle').value.trim();
       const author = document.getElementById('bookAuthor').value.trim();
       const description =
         document.getElementById('bookDescription').value.trim();
       const file = document.getElementById('bookFile').files[0];
+      const bookLink = document.getElementById('bookLink').value.trim();
 
-      if (!title || !file) {
-        uploadStatus.textContent = 'Enter a title and choose a PDF file.';
+      if (!title || (!file && !bookLink)) {
+        uploadStatus.textContent =
+          'Enter a title and provide either a PDF file or a book link.';
         return;
       }
 
-      if (
-        file.type !== 'application/pdf' &&
-        !file.name.toLowerCase().endsWith('.pdf')
-      ) {
-        uploadStatus.textContent = 'Please choose a PDF file.';
-        return;
+      if (bookLink) {
+        try {
+          const url = new URL(bookLink);
+          if (url.protocol !== 'https:' && url.protocol !== 'http:') {
+            throw new Error('Invalid URL');
+          }
+        } catch {
+          uploadStatus.textContent = 'Please enter a valid book link.';
+          return;
+        }
       }
 
-      if (file.size > 25 * 1024 * 1024) {
-        uploadStatus.textContent = 'The PDF must be 25 MB or smaller.';
-        return;
+      if (file) {
+        if (
+          file.type !== 'application/pdf' &&
+          !file.name.toLowerCase().endsWith('.pdf')
+        ) {
+          uploadStatus.textContent = 'Please choose a PDF file.';
+          return;
+        }
+
+        if (file.size > 25 * 1024 * 1024) {
+          uploadStatus.textContent = 'The PDF must be 25 MB or smaller.';
+          return;
+        }
       }
 
       uploadButton.disabled = true;
