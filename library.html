@@ -576,19 +576,27 @@
         .replace(/[^a-zA-Z0-9._-]/g, '_')
         .slice(-150);
 
-      const filePath =
-        sessionData.session.user.id + '/' +
-        Date.now() + '-' + safeName;
+        let filePath;
+      let uploadedFile = false;
 
       try {
-        const { error: storageError } = await db.storage
-          .from(BUCKET)
-          .upload(filePath, file, {
-            contentType: 'application/pdf',
-            upsert: false
-          });
+        if (file) {
+          filePath =
+            sessionData.session.user.id + '/' +
+            Date.now() + '-' + safeName;
 
-        if (storageError) throw storageError;
+          const { error: storageError } = await db.storage
+            .from(BUCKET)
+            .upload(filePath, file, {
+              contentType: 'application/pdf',
+              upsert: false
+            });
+
+          if (storageError) throw storageError;
+          uploadedFile = true;
+        } else {
+          filePath = bookLink;
+        }
 
         const { error: recordError } = await db
           .from('chess_library')
@@ -601,10 +609,11 @@
           });
 
         if (recordError) {
-          await db.storage.from(BUCKET).remove([filePath]);
+          if (uploadedFile) {
+            await db.storage.from(BUCKET).remove([filePath]);
+          }
           throw recordError;
         }
-
         uploadForm.reset();
         uploadStatus.textContent = 'Book uploaded successfully!';
         await loadBooks();
