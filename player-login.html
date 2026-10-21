@@ -333,8 +333,76 @@ const tokenResponse = await fetch("https://lichess.org/api/token", {
     }
   }
 
-  loginButton.addEventListener("click", startLogin);
-  finishLogin();
+ loginButton.addEventListener("click", startLogin);
+
+async function initializeLogin() {
+  const params = new URLSearchParams(window.location.search);
+
+  // Complete an OAuth callback first, if one is pending.
+  if (params.has("code") || params.has("error")) {
+    await finishLogin();
+    return;
+  }
+
+  const token = localStorage.getItem(STORAGE_TOKEN);
+  const expiry = localStorage.getItem(STORAGE_EXPIRY);
+
+  if (!token) return;
+
+  if (!expiry || new Date(expiry).getTime() <= Date.now()) {
+    localStorage.removeItem(STORAGE_TOKEN);
+    localStorage.removeItem(STORAGE_EXPIRY);
+    localStorage.removeItem(STORAGE_USER);
+    return;
+  }
+
+  statusBox.textContent = "Checking your DYCHESS session...";
+  loginButton.disabled = true;
+
+  try {
+    const response = await fetch(
+      SUPABASE_URL + "/functions/v1/validate-lichess-player-session",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "apikey": SUPABASE_PUBLISHABLE_KEY,
+          "x-dychess-session": token
+        },
+        body: JSON.stringify({})
+      }
+    );
+
+    const result = await response.json();
+
+    if (!response.ok || !result.valid) {
+      throw new Error("Session is no longer valid.");
+    }
+
+    localStorage.setItem(STORAGE_USER, result.player.username);
+
+    statusBox.textContent =
+      "Welcome back, " + result.player.username + "! You are signed in.";
+
+    loginButton.textContent = "Signed in";
+    loginButton.disabled = false;
+
+  } catch (error) {
+    console.error("Session validation failed:", error);
+
+    localStorage.removeItem(STORAGE_TOKEN);
+    localStorage.removeItem(STORAGE_EXPIRY);
+    localStorage.removeItem(STORAGE_USER);
+
+    statusBox.textContent =
+      "Please sign in with Lichess to continue.";
+
+    loginButton.textContent = "Sign in with Lichess";
+    loginButton.disabled = false;
+  }
+}
+
+initializeLogin();
 </script>
 </body>
 </html>
