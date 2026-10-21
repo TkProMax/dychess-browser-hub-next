@@ -257,21 +257,21 @@
     loginButton.disabled = true;
 
     try {
-      const tokenResponse = await fetch("https://lichess.org/api/token", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
-          "Accept": "application/json"
-        },
-        body: new URLSearchParams({
-          grant_type: "authorization_code",
-          code: code,
-          code_verifier: verifier,
-          redirect_uri: redirectUri,
-          client_id: window.location.hostname
-        })
-      });
-
+ 
+const tokenResponse = await fetch("https://lichess.org/api/token", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/x-www-form-urlencoded",
+    "Accept": "application/json"
+  },
+  body: new URLSearchParams({
+    grant_type: "authorization_code",
+    code: code,
+    code_verifier: verifier,
+    redirect_uri: redirectUri,
+    client_id: window.location.hostname
+  })
+});
       if (!tokenResponse.ok) {
         throw new Error("Lichess token exchange failed.");
       }
