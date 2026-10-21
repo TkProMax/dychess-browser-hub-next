@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -391,3 +392,166 @@
           await cancelChallenge(item.id);
         });
       }
+
+      if (item.lichess_url) {
+        const link = document.createElement("a");
+        link.className = "button-link secondary";
+        link.href = item.lichess_url;
+        link.target = "_blank";
+        link.rel = "noopener noreferrer";
+        link.textContent = "Open Lichess game";
+        actions.appendChild(link);
+      }
+
+      return wrapper;
+    }
+
+    function renderList(element, items, direction) {
+      element.replaceChildren();
+
+      if (!items || items.length === 0) {
+        addText(
+          element,
+          "p",
+          direction === "incoming"
+            ? "No incoming challenges yet."
+            : "No sent challenges yet.",
+          "empty"
+        );
+        return;
+      }
+
+      items.forEach((item) => {
+        element.appendChild(renderChallenge(item, direction));
+      });
+    }
+
+    async function loadChallenges() {
+      clearNotice();
+
+      try {
+        const result = await api("list");
+        renderList(incomingList, result.incoming, "incoming");
+        renderList(sentList, result.sent, "sent");
+      } catch (error) {
+        showNotice(error.message, "error");
+      }
+    }
+
+    async function respond(challengeId, decision) {
+      clearNotice();
+
+      try {
+        const result = await api("respond", { challengeId, decision });
+        showNotice(result.message || "Response saved.");
+        await loadChallenges();
+      } catch (error) {
+        showNotice(error.message, "error");
+      }
+    }
+
+    async function cancelChallenge(challengeId) {
+      if (!confirm("Cancel this pending challenge?")) return;
+
+      clearNotice();
+
+      try {
+        const result = await api("cancel", { challengeId });
+        showNotice(result.message || "Challenge cancelled.");
+        await loadChallenges();
+      } catch (error) {
+        showNotice(error.message, "error");
+      }
+    }
+
+    document.getElementById("challengeForm").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      clearNotice();
+
+      const opponentUsername =
+        document.getElementById("opponentUsername").value.trim();
+      const gameFormat =
+        document.getElementById("gameFormat").value;
+
+      sendButton.disabled = true;
+      sendButton.textContent = "Sending…";
+
+      try {
+        const result = await api("create", {
+          opponentUsername,
+          gameFormat
+        });
+
+        document.getElementById("opponentUsername").value = "";
+        showNotice(result.message || "Challenge sent.");
+        await loadChallenges();
+      } catch (error) {
+        showNotice(error.message, "error");
+      } finally {
+        sendButton.disabled = false;
+        sendButton.textContent = "Send challenge";
+      }
+    });
+
+    refreshButton.addEventListener("click", loadChallenges);
+
+    async function initialize() {
+      sessionToken = localStorage.getItem(SESSION_KEY) || "";
+      currentUsername = localStorage.getItem(USERNAME_KEY) || "";
+
+      const expiry = Number(localStorage.getItem(EXPIRY_KEY) || "0");
+
+      if (!sessionToken || (expiry && expiry <= Date.now())) {
+        sessionToken = "";
+        loginStatus.textContent =
+          "Sign in with your Lichess account to send and receive challenges.";
+        signInLink.hidden = false;
+        createPanel.hidden = true;
+        incomingPanel.hidden = true;
+        sentPanel.hidden = true;
+        return;
+      }
+
+      loginStatus.textContent = currentUsername
+        ? "Welcome, " + currentUsername + "! Checking your session…"
+        : "Checking your DYCHESS session…";
+
+      try {
+        await api("list");
+        loginStatus.textContent = currentUsername
+          ? "Welcome, " + currentUsername + "! You are signed in."
+          : "You are signed in to DYCHESS.";
+
+        signInLink.hidden = true;
+        refreshButton.hidden = false;
+        createPanel.hidden = false;
+        incomingPanel.hidden = false;
+        sentPanel.hidden = false;
+
+        await loadChallenges();
+      } catch (error) {
+        if (/session|sign in|expired|verified/i.test(error.message)) {
+          sessionToken = "";
+          loginStatus.textContent =
+            "Your session could not be verified. Please sign in again.";
+          signInLink.hidden = false;
+          createPanel.hidden = true;
+          incomingPanel.hidden = true;
+          sentPanel.hidden = true;
+        } else {
+          loginStatus.textContent =
+            "Signed in, but the Challenge Arena could not load.";
+          signInLink.hidden = true;
+          refreshButton.hidden = false;
+          createPanel.hidden = false;
+          incomingPanel.hidden = false;
+          sentPanel.hidden = false;
+          showNotice(error.message, "error");
+        }
+      }
+    }
+
+    initialize();
+  </script>
+</body>
+</html>
