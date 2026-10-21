@@ -154,73 +154,187 @@
   </main>
 
   <script>
-    const loginButton = document.getElementById("lichessLogin");
-    const statusBox = document.getElementById("status");
+  const loginButton = document.getElementById("lichessLogin");
+  const statusBox = document.getElementById("status");
 
-    loginButton.addEventListener("click", async () => {
-      statusBox.textContent =
-        "Lichess login is being connected. Please wait.";
-      loginButton.disabled = true;
+  const SUPABASE_URL = "https://rpfowuqlhboslhmvjelc.supabase.co";
+  const SUPABASE_PUBLISHABLE_KEY = "PASTE_YOUR_SUPABASE_PUBLISHABLE_KEY_HERE";
 
-      try {
-        const bytes = crypto.getRandomValues(new Uint8Array(32));
+  const STORAGE_TOKEN = "dychess_player_session";
+  const STORAGE_EXPIRY = "dychess_player_session_expiry";
+  const STORAGE_USER = "dychess_player_username";
 
-        const verifier = Array.from(bytes)
-          .map(byte => byte.toString(16).padStart(2, "0"))
-          .join("");
+  const redirectUri =
+    window.location.origin + window.location.pathname;
 
-        const digest = await crypto.subtle.digest(
-          "SHA-256",
-          new TextEncoder().encode(verifier)
-        );
+  function showError(message) {
+    statusBox.textContent = message;
+    loginButton.disabled = false;
+  }
 
-        const challenge = btoa(
-          String.fromCharCode(...new Uint8Array(digest))
-        )
-          .replace(/\+/g, "-")
-          .replace(/\//g, "_")
-          .replace(/=+$/, "");
+  async function startLogin() {
+    statusBox.textContent = "Connecting to Lichess...";
+    loginButton.disabled = true;
 
-        const stateBytes = crypto.getRandomValues(
-          new Uint8Array(24)
-        );
+    try {
+      const bytes = crypto.getRandomValues(new Uint8Array(32));
 
-        const state = Array.from(stateBytes)
-          .map(byte => byte.toString(16).padStart(2, "0"))
-          .join("");
+      const verifier = Array.from(bytes)
+        .map(byte => byte.toString(16).padStart(2, "0"))
+        .join("");
 
-        sessionStorage.setItem(
-          "dychess_lichess_verifier",
-          verifier
-        );
+      const digest = await crypto.subtle.digest(
+        "SHA-256",
+        new TextEncoder().encode(verifier)
+      );
 
-        sessionStorage.setItem(
-          "dychess_lichess_state",
-          state
-        );
+      const challenge = btoa(
+        String.fromCharCode(...new Uint8Array(digest))
+      )
+        .replace(/\+/g, "-")
+        .replace(/\//g, "_")
+        .replace(/=+$/, "");
 
-        const redirectUri =
-          window.location.origin + window.location.pathname;
+      const stateBytes = crypto.getRandomValues(
+        new Uint8Array(24)
+      );
 
-        const params = new URLSearchParams({
-          response_type: "code",
-          client_id: window.location.hostname,
+      const state = Array.from(stateBytes)
+        .map(byte => byte.toString(16).padStart(2, "0"))
+        .join("");
+
+      sessionStorage.setItem("dychess_lichess_verifier", verifier);
+      sessionStorage.setItem("dychess_lichess_state", state);
+
+      const params = new URLSearchParams({
+        response_type: "code",
+        client_id: window.location.hostname,
+        redirect_uri: redirectUri,
+        code_challenge_method: "S256",
+        code_challenge: challenge,
+        state: state
+      });
+
+      window.location.assign(
+        "https://lichess.org/oauth?" + params.toString()
+      );
+    } catch (error) {
+      console.error("Login setup failed:", error);
+      showError("Could not start Lichess login. Please try again.");
+    }
+  }
+
+  async function finishLogin() {
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get("code");
+    const returnedState = params.get("state");
+    const oauthError = params.get("error");
+
+    if (oauthError) {
+      sessionStorage.removeItem("dychess_lichess_verifier");
+      sessionStorage.removeItem("dychess_lichess_state");
+      history.replaceState({}, "", redirectUri);
+      showError("Lichess login was cancelled or denied. Please try again.");
+      return;
+    }
+
+    if (!code) {
+      return;
+    }
+
+    const savedState = sessionStorage.getItem("dychess_lichess_state");
+    const verifier = sessionStorage.getItem("dychess_lichess_verifier");
+
+    if (!savedState || !verifier || returnedState !== savedState) {
+      history.replaceState({}, "", redirectUri);
+      sessionStorage.removeItem("dychess_lichess_verifier");
+      sessionStorage.removeItem("dychess_lichess_state");
+      showError("Login security check failed. Please start again.");
+      return;
+    }
+
+    statusBox.textContent = "Verifying your Lichess account...";
+    loginButton.disabled = true;
+
+    try {
+      const tokenResponse = await fetch("https://lichess.org/api/token", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+          "Accept": "application/json"
+        },
+        body: new URLSearchParams({
+          grant_type: "authorization_code",
+          code: code,
+          code_verifier: verifier,
           redirect_uri: redirectUri,
-          code_challenge_method: "S256",
-          code_challenge: challenge,
-          state: state,
-          scope: "challenge:read challenge:write"
-        });
+          client_id: window.location.hostname
+        })
+      });
 
-        window.location.href =
-          "https://lichess.org/oauth?" + params.toString();
-      } catch (error) {
-        console.error("Lichess login setup failed:", error);
-        statusBox.textContent =
-          "Could not start login. Please try again.";
-        loginButton.disabled = false;
+      if (!tokenResponse.ok) {
+        throw new Error("Lichess token exchange failed.");
       }
-    });
-  </script>
+
+      const tokenData = await tokenResponse.json();
+
+      if (!tokenData.access_token) {
+        throw new Error("Lichess did not return an access token.");
+      }
+
+      const loginResponse = await fetch(
+        SUPABASE_URL + "/functions/v1/lichess-player-login",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "apikey": SUPABASE_PUBLISHABLE_KEY
+          },
+          body: JSON.stringify({
+            lichessAccessToken: tokenData.access_token
+          })
+        }
+      );
+
+      const result = await loginResponse.json();
+
+      if (!loginResponse.ok || !result.verified || !result.sessionToken) {
+        throw new Error(
+          result.error || "DYCHESS could not verify your account."
+        );
+      }
+
+      localStorage.setItem(STORAGE_TOKEN, result.sessionToken);
+      localStorage.setItem(STORAGE_EXPIRY, result.expiresAt);
+      localStorage.setItem(STORAGE_USER, result.username);
+
+      sessionStorage.removeItem("dychess_lichess_verifier");
+      sessionStorage.removeItem("dychess_lichess_state");
+
+      history.replaceState({}, "", redirectUri);
+
+      statusBox.textContent =
+        "Welcome to DYCHESS, " + result.username + "! You are signed in.";
+
+      loginButton.disabled = false;
+      loginButton.textContent = "Signed in";
+
+    } catch (error) {
+      console.error("Lichess login failed:", error);
+
+      sessionStorage.removeItem("dychess_lichess_verifier");
+      sessionStorage.removeItem("dychess_lichess_state");
+
+      history.replaceState({}, "", redirectUri);
+
+      showError(
+        "Login could not be completed. Please try again. If this continues, contact DYCHESS Support."
+      );
+    }
+  }
+
+  loginButton.addEventListener("click", startLogin);
+  finishLogin();
+</script>
 </body>
 </html>
