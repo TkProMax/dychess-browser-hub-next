@@ -327,6 +327,7 @@ const tokenResponse = await fetch("https://lichess.org/api/token", {
 
       loginButton.disabled = false;
       loginButton.textContent = "Signed in";
+      logoutButton.hidden = false;
 
     } catch (error) {
       console.error("Lichess login failed:", error);
@@ -394,6 +395,7 @@ async function initializeLogin() {
       "Welcome back, " + result.player.username + "! You are signed in.";
 
     loginButton.textContent = "Signed in";
+    logoutButton.hidden = false;
     loginButton.disabled = false;
 
   } catch (error) {
@@ -412,6 +414,42 @@ async function initializeLogin() {
 }
 
 initializeLogin();
+  logoutButton.addEventListener("click", async () => {
+  const token = localStorage.getItem(STORAGE_TOKEN);
+
+  logoutButton.disabled = true;
+  statusBox.textContent = "Signing out...";
+
+  try {
+    if (token) {
+      await fetch(
+        SUPABASE_URL + "/functions/v1/logout-lichess-player",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "apikey": SUPABASE_PUBLISHABLE_KEY,
+            "x-dychess-session": token
+          },
+          body: JSON.stringify({})
+        }
+      );
+    }
+  } catch (error) {
+    console.error("Server sign-out request failed:", error);
+  }
+
+  localStorage.removeItem(STORAGE_TOKEN);
+  localStorage.removeItem(STORAGE_EXPIRY);
+  localStorage.removeItem(STORAGE_USER);
+
+  logoutButton.hidden = true;
+  logoutButton.disabled = false;
+  loginButton.textContent = "Continue with Lichess";
+  loginButton.disabled = false;
+
+  statusBox.textContent = "You have signed out of DYCHESS.";
+});
 </script>
 </body>
 </html>
