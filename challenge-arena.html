@@ -578,6 +578,77 @@
         }
       }
     }
+    async function checkCupAdmin() {
+      cupAdminControls.hidden = true;
+
+      try {
+        const { data, error } = await adminDb.auth.getSession();
+        if (error) throw error;
+
+        const session = data.session;
+        if (!session) return;
+
+        const { data: permission, error: permissionError } = await adminDb
+          .from("admin_users")
+          .select("user_id")
+          .eq("user_id", session.user.id)
+          .maybeSingle();
+
+        if (permissionError) throw permissionError;
+
+        if (permission) {
+          cupAdminControls.hidden = false;
+          cupAdminMessage.textContent = "Admin access verified.";
+        }
+      } catch (error) {
+        console.error("Cup admin check failed:", error);
+      }
+    }
+
+    createCupButton.addEventListener("click", async () => {
+      createCupButton.disabled = true;
+      cupAdminMessage.textContent = "Creating DYCHESS CUP...";
+
+      try {
+        const { data, error } = await adminDb.auth.getSession();
+        if (error) throw error;
+
+        const session = data.session;
+        if (!session) {
+          throw new Error("Please sign in through Admin.html first.");
+        }
+
+        const response = await fetch(
+          SUPABASE_URL + "/functions/v1/arena-cup",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "apikey": SUPABASE_PUBLISHABLE_KEY,
+              "Authorization": "Bearer " + session.access_token
+            },
+            body: JSON.stringify({ action: "setup" })
+          }
+        );
+
+        const result = await response.json().catch(() => ({}));
+
+        if (!response.ok || !result.success) {
+          throw new Error(result.error || "Could not create DYCHESS CUP.");
+        }
+
+        cupAdminMessage.textContent =
+          result.message || "DYCHESS CUP created successfully.";
+
+        await loadCupTournament();
+      } catch (error) {
+        cupAdminMessage.textContent = error.message;
+      } finally {
+        createCupButton.disabled = false;
+      }
+    });
+
+    checkCupAdmin();
    async function loadCupTournament() {
       const area = document.getElementById("cupTournamentArea");
       if (!area) return;
