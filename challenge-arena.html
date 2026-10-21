@@ -562,6 +562,27 @@
       }
     }
 
+            const list = document.createElement("ol");
+
+            tournamentRegistrations
+              .slice()
+              .sort((a, b) => (a.seed ?? 999) - (b.seed ?? 999))
+              .forEach((entry) => {
+                const item = document.createElement("li");
+                item.textContent = playerName(entry.player_id);
+                list.appendChild(item);
+              });
+
+            area.appendChild(list);
+          }
+        });
+      } catch (error) {
+        area.textContent =
+          "Could not load DYCHESS CUP: " + error.message;
+      }
+    }
+
+    loadCupTournament();
     initialize();
   </script>
 </body>
