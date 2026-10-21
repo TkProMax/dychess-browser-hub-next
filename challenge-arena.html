@@ -244,6 +244,19 @@
     font-size: 13px;
   }
 }
+  .cup-winner-result {
+  margin-top: 14px;
+  padding: 11px 14px;
+  border: 1px solid rgba(217, 180, 91, 0.5);
+  border-radius: 10px;
+  background: linear-gradient(135deg, #292414, #111b12);
+  color: #d9b45b;
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.7px;
+  text-transform: uppercase;
+  box-shadow: 0 0 12px rgba(217, 180, 91, 0.1);
+}
   </style>
 </head>
 <body>
@@ -882,10 +895,14 @@ player2Box.className = "cup-player-box";
 player2Box.textContent = playerName(match.player2_id);
 
 playersLine.append(player1Box, versus, player2Box);
-            const resultLine = document.createElement("p");
-            resultLine.textContent = match.winner_id
-              ? "Winner: " + playerName(match.winner_id)
-              : "Status: " + match.status.replaceAll("_", " ");
+          const resultLine = document.createElement("p");
+resultLine.className = match.winner_id
+  ? "cup-winner-result"
+  : "cup-match-status";
+
+resultLine.textContent = match.winner_id
+  ? "♛ WINNER: " + playerName(match.winner_id)
+  : "Status: " + match.status.replaceAll("_", " ");
 
             card.append(round, playersLine, resultLine);
             area.appendChild(card);
