@@ -561,7 +561,130 @@
         }
       }
     }
+   async function loadCupTournament() {
+      const area = document.getElementById("cupTournamentArea");
+      if (!area) return;
 
+      area.textContent = "Loading DYCHESS CUP...";
+
+      try {
+        const response = await fetch(
+          SUPABASE_URL + "/functions/v1/arena-cup",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "apikey": SUPABASE_PUBLISHABLE_KEY
+            },
+            body: JSON.stringify({ action: "list" })
+          }
+        );
+
+        const result = await response.json();
+
+        if (!response.ok) {
+          throw new Error(result.error || "Could not load the Cup.");
+        }
+
+        area.replaceChildren();
+
+        const tournaments = result.tournaments || [];
+        const registrations = result.registrations || [];
+        const matches = result.matches || [];
+        const players = result.players || [];
+
+        if (tournaments.length === 0) {
+          area.textContent = "No DYCHESS CUP tournament is available yet.";
+          return;
+        }
+
+        const playerName = (id) => {
+          const player = players.find(
+            (item) => Number(item.id) === Number(id)
+          );
+          return player
+            ? (player.lichess_username || player.display_name)
+            : "TBD";
+        };
+
+        tournaments.forEach((tournament) => {
+          const heading = document.createElement("h3");
+          heading.textContent = tournament.name;
+          area.appendChild(heading);
+
+          const status = document.createElement("p");
+          status.textContent =
+            "Status: " + tournament.status.replaceAll("_", " ");
+          area.appendChild(status);
+
+          const tournamentMatches = matches
+            .filter(
+              (match) =>
+                Number(match.tournament_id) === Number(tournament.id)
+            )
+            .sort(
+              (a, b) =>
+                a.round_number - b.round_number ||
+                a.match_number - b.match_number
+            );
+
+          if (tournamentMatches.length === 0) {
+            const message = document.createElement("p");
+            message.textContent = "Matches have not been created yet.";
+            area.appendChild(message);
+          }
+
+          tournamentMatches.forEach((match) => {
+            const card = document.createElement("div");
+            card.className = "cup-match";
+
+            const round = document.createElement("h4");
+            round.textContent =
+              (match.round_number === 1
+                ? "Quarter-final"
+                : match.round_number === 2
+                  ? "Semi-final"
+                  : "Final") +
+              " — Match " +
+              match.match_number;
+
+            const playersLine = document.createElement("p");
+            playersLine.textContent =
+              playerName(match.player1_id) +
+              " vs " +
+              playerName(match.player2_id);
+
+            const resultLine = document.createElement("p");
+            resultLine.textContent = match.winner_id
+              ? "Winner: " + playerName(match.winner_id)
+              : "Status: " + match.status.replaceAll("_", " ");
+
+            card.append(round, playersLine, resultLine);
+            area.appendChild(card);
+          });
+
+          const tournamentRegistrations = registrations.filter(
+            (entry) =>
+              Number(entry.tournament_id) === Number(tournament.id)
+          );
+
+          if (tournamentRegistrations.length > 0) {
+            const registeredHeading = document.createElement("h4");
+            registeredHeading.textContent = "Registered players";
+            area.appendChild(registeredHeading);
+
+            const list = document.createElement("ol");
+
+            tournamentRegistrations
+              .slice()
+              .sort((a, b) => (a.seed ?? 999) - (b.seed ?? 999))
+              .forEach((entry) => {
+                const item = document.createElement("li");
+                item.textContent = playerName(entry.player_id);
+                list.appendChild(item);
+              });
+
+            area.appendChild(list);
           }
         });
       } catch (error) {
