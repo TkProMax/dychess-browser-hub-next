@@ -534,6 +534,7 @@
           sessionToken = "";
           loginStatus.textContent =
             "Your session could not be verified. Please sign in again.";
+          showNotice(error.message, "error");
           signInLink.hidden = false;
           createPanel.hidden = true;
           incomingPanel.hidden = true;
