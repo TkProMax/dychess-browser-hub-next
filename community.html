@@ -1,1 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DYCHESS Community</title>
 
+  <style>
+    :root {
+      --dark: #080d0a;
+      --panel: #102319;
+      --gold: #c9a64b;
+      --text: #f5f5f0;
+      --muted: #c5cec3;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: var(--dark);
+      color: var(--text);
+    }
+
+    header {
+      padding: 20px 16px;
+      background: var(--panel);
+      border-bottom: 1px solid var(--gold);
+    }
+
+    .container {
+      width: min(1000px, 92%);
+      margin: 0 auto;
+    }
+
+    .header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .brand {
+      color: var(--gold);
+      font-size: 22px;
+      font-weight: bold;
+      text-decoration: none;
+    }
+
+    .button {
+      display: inline-block;
+      padding: 9px 14px;
+      border: 1px solid var(--gold);
+      border-radius: 8px;
+      color: var(--text);
+      text-decoration: none;
+      font-size: 14px;
+      transition: 0.2s;
+    }
+
+    .button:hover {
+      background: var(--gold);
+      color: var(--dark);
+    }
+
+    main {
+      padding: 42px 0 60px;
+    }
+
+    .eyebrow {
+      color: var(--gold);
+      font-size: 12px;
+      font-weight: bold;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 12px 0;
+      font-size: clamp(30px, 5vw, 44px);
+    }
+
+    .intro {
+      max-width: 680px;
+      color: var(--muted);
+      line-height: 1.8;
+      margin-bottom: 32px;
+    }
+
+    .section-title {
+      margin: 34px 0 18px;
+      color: var(--gold);
+      font-size: 22px;
+    }
+
+    .news-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 20px;
+    }
+
+    .news-card {
+      padding: 24px;
+      background: linear-gradient(145deg, #102319, #080d0a);
+      border: 1px solid #c9a64b99;
+      border-radius: 14px;
+    }
+
+    .news-tag {
+      display: inline-block;
+      color: var(--gold);
+      border: 1px solid #c9a64b70;
+      border-radius: 20px;
+      padding: 6px 10px;
+      font-size: 11px;
+      font-weight: bold;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .news-card h3 {
+      margin: 15px 0 10px;
+      font-size: 21px;
+    }
+
+    .news-card p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.8;
+    }
+
+    .community-banner {
+      margin-top: 32px;
+      padding: 28px 22px;
+      text-align: center;
+      background: var(--panel);
+      border: 1px solid var(--gold);
+      border-radius: 14px;
+    }
+
+    .community-banner h2 {
+      margin-top: 0;
+      color: var(--gold);
+    }
+
+    .community-banner p {
+      color: var(--muted);
+      line-height: 1.8;
+    }
+
+    .banner-actions {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 20px;
+    }
+
+    footer {
+      border-top: 1px solid #c9a64b40;
+      color: var(--muted);
+      text-align: center;
+      padding: 22px 12px;
+      font-size: 13px;
+    }
+
+    @media (max-width: 650px) {
+      .news-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .news-card {
+        padding: 20px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <div class="container header-row">
+      <a class="brand" href="index.html">♞ DYCHESS</a>
+      <a class="button" href="index.html">Back to Home</a>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="eyebrow">One Community • One Board</div>
+    <h1>DYCHESS Community</h1>
+
+    <p class="intro">
+      Welcome to the home of DYCHESS community updates. Find announcements,
+      tournament news, player achievements, and important notices from
+      across our chess community.
+    </p>
+
+    <h2 class="section-title">Community Updates</h2>
+
+    <section class="news-grid" aria-label="Community updates">
+      <article class="news-card">
+        <span class="news-tag">Announcement</span>
+        <h3>Welcome to the DYCHESS Community</h3>
+        <p>
+          This is your place to stay connected with DYCHESS. Check back
+          for tournament announcements, community news, and important updates.
+        </p>
+      </article>
+
+      <article class="news-card">
+        <span class="news-tag">Tournaments</span>
+        <h3>Compete with DYCHESS</h3>
+        <p>
+          Follow upcoming tournaments, prepare for your next match,
+          and keep an eye on announcements about competitive events.
+        </p>
+        <p style="margin-top:16px;">
+          <a class="button" href="index.html#tournaments">View Tournaments</a>
+        </p>
+      </article>
+
+      <article class="news-card">
+        <span class="news-tag">Achievements</span>
+        <h3>Celebrate Our Players</h3>
+        <p>
+          Every strong performance contributes to our community's story.
+          Visit the Hall of Fame to recognise DYCHESS champions and
+          memorable achievements.
+        </p>
+        <p style="margin-top:16px;">
+          <a class="button" href="hall-of-fame.html">Visit Hall of Fame</a>
+        </p>
+      </article>
+
+      <article class="news-card">
+        <span class="news-tag">Rankings</span>
+        <h3>Follow the Leaderboard</h3>
+        <p>
+          See how players rank by DYCHESS points and follow the competition
+          as players work toward the top of the leaderboard.
+        </p>
+        <p style="margin-top:16px;">
+          <a class="button" href="leaderboard.html">View Leaderboard</a>
+        </p>
+      </article>
+    </section>
+
+    <section class="community-banner">
+      <h2>Be Part of the Conversation</h2>
+      <p>
+        Chess is better when we learn, compete, and celebrate together.
+        Connect with fellow players and help DYCHESS grow.
+      </p>
+      <div class="banner-actions">
+        <a class="button" href="community-chat.html">Community Chat</a>
+        <a class="button" href="index.html">Explore DYCHESS</a>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    © 2026 DYCHESS. Built for the community.
+  </footer>
+</body>
+</html>
