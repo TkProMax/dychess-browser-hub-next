@@ -206,6 +206,44 @@
       .panel { padding: 17px; }
       nav { gap: 10px; }
     }
+    .cup-players {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  margin: 18px 0;
+}
+
+.cup-player-box {
+  min-width: 0;
+  padding: 14px 10px;
+  border: 1px solid #38523b;
+  border-radius: 12px;
+  background: linear-gradient(145deg, #12271b, #09170f);
+  color: #f4f6ef;
+  font-weight: 700;
+  text-align: center;
+  overflow-wrap: anywhere;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.cup-versus {
+  color: #d9b45b;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1px;
+}
+
+@media (max-width: 480px) {
+  .cup-players {
+    gap: 6px;
+  }
+
+  .cup-player-box {
+    padding: 12px 6px;
+    font-size: 13px;
+  }
+}
   </style>
 </head>
 <body>
@@ -828,12 +866,22 @@
               " — Match " +
               match.match_number;
 
-            const playersLine = document.createElement("p");
-            playersLine.textContent =
-              playerName(match.player1_id) +
-              " vs " +
-              playerName(match.player2_id);
+          const playersLine = document.createElement("div");
+playersLine.className = "cup-players";
 
+const player1Box = document.createElement("div");
+player1Box.className = "cup-player-box";
+player1Box.textContent = playerName(match.player1_id);
+
+const versus = document.createElement("div");
+versus.className = "cup-versus";
+versus.textContent = "VS";
+
+const player2Box = document.createElement("div");
+player2Box.className = "cup-player-box";
+player2Box.textContent = playerName(match.player2_id);
+
+playersLine.append(player1Box, versus, player2Box);
             const resultLine = document.createElement("p");
             resultLine.textContent = match.winner_id
               ? "Winner: " + playerName(match.winner_id)
