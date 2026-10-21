@@ -272,9 +272,16 @@
     </section>
     <section class="panel" id="dychessCupPanel">
       <h2>🏆 DYCHESS CUP</h2>
-      <p class="muted">
+        <p class="muted">
         Follow the knockout bracket, submit match winners, and confirm or dispute results.
       </p>
+
+      <div id="cupAdminControls" hidden>
+        <button type="button" id="createCupButton">
+          Create DYCHESS CUP
+        </button>
+        <p id="cupAdminMessage" role="status"></p>
+      </div>
       <div id="cupTournamentArea">
         <p class="empty">Loading DYCHESS CUP...</p>
       </div>
