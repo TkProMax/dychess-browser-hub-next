@@ -674,6 +674,72 @@
       }
     });
 
+    
+  const recordCupResultButton = document.getElementById("recordCupResultButton");
+
+  recordCupResultButton.addEventListener("click", async () => {
+    const matchId = Number(
+      document.getElementById("cupResultMatchId").value
+    );
+    const winnerUsername = document.getElementById("cupResultWinner").value.trim();
+
+    if (!Number.isSafeInteger(matchId) || matchId <= 0 || !winnerUsername) {
+      cupAdminMessage.textContent = "Enter a valid match ID and winner username.";
+      return;
+    }
+
+    if (!window.confirm(
+      `Record ${winnerUsername} as the winner of Match ID ${matchId}?`
+    )) {
+      return;
+    }
+
+    recordCupResultButton.disabled = true;
+    cupAdminMessage.textContent = "Recording match result...";
+
+    try {
+      const { data, error } = await adminDb.auth.getSession();
+      if (error) throw error;
+
+      const session = data.session;
+      if (!session) {
+        throw new Error("Please sign in through Admin.html first.");
+      }
+
+      const response = await fetch(
+        SUPABASE_URL + "/functions/v1/arena-cup",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "apikey": SUPABASE_PUBLISHABLE_KEY,
+            "Authorization": "Bearer " + session.access_token
+          },
+          body: JSON.stringify({
+            action: "admin_record_winner",
+            matchId,
+            winnerUsername
+          })
+        }
+      );
+
+      const result = await response.json().catch(() => ({}));
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || "Could not record the match result.");
+      }
+
+      cupAdminMessage.textContent =
+        result.message || "Match result recorded successfully.";
+
+      await loadCupTournament();
+    } catch (error) {
+      cupAdminMessage.textContent = error.message;
+    } finally {
+      recordCupResultButton.disabled = false;
+    }
+  });
+
     checkCupAdmin();
    async function loadCupTournament() {
       const area = document.getElementById("cupTournamentArea");
