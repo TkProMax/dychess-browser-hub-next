@@ -579,15 +579,14 @@
       uploadButton.disabled = true;
       uploadStatus.textContent = 'Uploading book...';
 
-      const safeName = file.name
-        .replace(/[^a-zA-Z0-9._-]/g, '_')
-        .slice(-150);
-
         let filePath;
       let uploadedFile = false;
 
       try {
         if (file) {
+            const safeName = file.name
+            .replace(/[^a-zA-Z0-9._-]/g, '_')
+            .slice(-150);
           filePath =
             sessionData.session.user.id + '/' +
             Date.now() + '-' + safeName;
