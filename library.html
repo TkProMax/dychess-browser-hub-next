@@ -471,16 +471,19 @@
             deleteButton.disabled = true;
             deleteButton.textContent = 'Deleting...';
 
-            const { error: fileError } = await db.storage
-              .from(BUCKET)
-              .remove([book.file_path]);
+          
+            if (!/^https?:\/\//i.test(book.file_path)) {
+              const { error: fileError } = await db.storage
+                .from(BUCKET)
+                .remove([book.file_path]);
 
-            if (fileError) {
-              console.error('File deletion failed:', fileError);
-              alert('Could not delete the book file. ' + fileError.message);
-              deleteButton.disabled = false;
-              deleteButton.textContent = 'Delete Book';
-              return;
+              if (fileError) {
+                console.error('File deletion failed:', fileError);
+                alert('Could not delete the book file. ' + fileError.message);
+                deleteButton.disabled = false;
+                deleteButton.textContent = 'Delete Book';
+                return;
+              }
             }
 
             const { error: rowError } = await db
