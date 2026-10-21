@@ -1,0 +1,338 @@
+import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import { createClient } from "npm:@supabase/supabase-js@2";
+
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
+const SECRET_KEYS_RAW = Deno.env.get("SUPABASE_SECRET_KEYS");
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin":
+    "https://dychess-browser-hub-next.vercel.app",
+  "Access-Control-Allow-Headers":
+    "authorization, apikey, content-type, x-client-info, x-dychess-session",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+};
+
+function reply(body: unknown, status = 200) {
+  return Response.json(body, { status, headers: corsHeaders });
+}
+
+async function hashToken(token: string): Promise<string> {
+  const digest = await crypto.subtle.digest(
+    "SHA-256",
+    new TextEncoder().encode(token)
+  );
+
+  return Array.from(new Uint8Array(digest))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+}
+
+Deno.serve(async (req: Request) => {
+  if (req.method === "OPTIONS") {
+    return new Response(null, { status: 204, headers: corsHeaders });
+  }
+
+  if (req.method !== "POST") {
+    return reply({ error: "POST required." }, 405);
+  }
+
+  let serviceKey: string;
+
+  try {
+    if (!SUPABASE_URL || !SECRET_KEYS_RAW) {
+      throw new Error("Missing server configuration.");
+    }
+
+    const keys = JSON.parse(SECRET_KEYS_RAW);
+    serviceKey = keys.default;
+
+    if (typeof serviceKey !== "string" || !serviceKey) {
+      throw new Error("Missing default secret key.");
+    }
+  } catch (error) {
+    console.error("Server configuration error:", error);
+    return reply({ error: "Server configuration is incomplete." }, 500);
+  }
+
+  const token = req.headers.get("x-dychess-session");
+
+  if (!token || !/^[a-f0-9]{64}$/.test(token)) {
+    return reply({ error: "Please sign in to your DYCHESS account." }, 401);
+  }
+
+  let body: {
+    action?: string;
+    opponentUsername?: string;
+    gameFormat?: string;
+    challengeId?: number;
+    decision?: string;
+  };
+
+  try {
+    body = await req.json();
+  } catch {
+    return reply({ error: "Invalid request body." }, 400);
+  }
+
+  const db = createClient(SUPABASE_URL, serviceKey, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+
+  try {
+    const tokenHash = await hashToken(token);
+
+    const { data: session, error: sessionError } = await db
+      .from("lichess_player_sessions")
+      .select("player_id, expires_at, revoked_at")
+      .eq("token_hash", tokenHash)
+      .maybeSingle();
+
+    if (sessionError) {
+      console.error("Session lookup failed:", sessionError);
+      return reply({ error: "Could not verify your session." }, 500);
+    }
+
+    if (
+      !session ||
+      session.revoked_at ||
+      new Date(session.expires_at).getTime() <= Date.now()
+    ) {
+      return reply({ error: "Your session has expired. Please sign in again." }, 401);
+    }
+
+    const playerId = Number(session.player_id);
+
+    const { data: me, error: meError } = await db
+      .from("players")
+      .select("id, display_name, lichess_username")
+      .eq("id", playerId)
+      .single();
+
+    if (meError || !me) {
+      return reply({ error: "Could not load your player record." }, 500);
+    }
+
+    const action = body.action;
+
+    if (action === "list") {
+      const { data: challenges, error } = await db
+        .from("arena_challenges")
+        .select("*")
+        .or(`challenger_id.eq.${playerId},opponent_id.eq.${playerId}`)
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        console.error("Challenge list failed:", error);
+        return reply({ error: "Could not load challenges." }, 500);
+      }
+
+      const ids = [...new Set(
+        (challenges ?? []).flatMap((c) => [
+          Number(c.challenger_id),
+          Number(c.opponent_id),
+        ])
+      )];
+
+      const { data: players, error: playersError } = ids.length
+        ? await db.from("players")
+            .select("id, display_name, lichess_username")
+            .in("id", ids)
+        : { data: [], error: null };
+
+      if (playersError) {
+        return reply({ error: "Could not load challenge players." }, 500);
+      }
+
+      const playerMap = new Map(
+        (players ?? []).map((p) => [Number(p.id), p])
+      );
+
+      return reply({
+        player: {
+          id: playerId,
+          username: me.display_name,
+        },
+        challenges: (challenges ?? []).map((c) => ({
+          ...c,
+          challenger_username:
+            playerMap.get(Number(c.challenger_id))?.display_name ?? "Unknown",
+          opponent_username:
+            playerMap.get(Number(c.opponent_id))?.display_name ?? "Unknown",
+          direction:
+            Number(c.challenger_id) === playerId ? "sent" : "received",
+        })),
+      });
+    }
+
+    if (action === "create") {
+      const username = body.opponentUsername?.trim();
+      const gameFormat = body.gameFormat ?? "5+0";
+
+      if (
+        !username ||
+        !/^[A-Za-z0-9_]{3,30}$/.test(username)
+      ) {
+        return reply({ error: "Enter a valid Lichess username." }, 400);
+      }
+
+      if (!["3+0", "5+0", "10+0"].includes(gameFormat)) {
+        return reply({ error: "Choose a supported time control." }, 400);
+      }
+
+      if (
+        username.toLowerCase() ===
+        String(me.lichess_username || me.display_name).toLowerCase()
+      ) {
+        return reply({ error: "You cannot challenge yourself." }, 400);
+      }
+
+      let { data: opponent, error: opponentError } = await db
+        .from("players")
+        .select("id, display_name, lichess_username")
+        .ilike("lichess_username", username)
+        .maybeSingle();
+
+      if (!opponent && !opponentError) {
+        const fallback = await db
+          .from("players")
+          .select("id, display_name, lichess_username")
+          .ilike("display_name", username)
+          .maybeSingle();
+
+        opponent = fallback.data;
+        opponentError = fallback.error;
+      }
+
+      if (opponentError) {
+        console.error("Opponent lookup failed:", opponentError);
+        return reply({ error: "Could not look up that player." }, 500);
+      }
+
+      if (!opponent) {
+        return reply({
+          error: "That player is not registered in the DYCHESS player list yet.",
+        }, 404);
+      }
+
+      const { data: existing, error: existingError } = await db
+        .from("arena_challenges")
+        .select("id")
+        .eq("challenger_id", playerId)
+        .eq("opponent_id", opponent.id)
+        .eq("status", "pending")
+        .maybeSingle();
+
+      if (existingError) {
+        return reply({ error: "Could not check existing challenges." }, 500);
+      }
+
+      if (existing) {
+        return reply({ error: "You already have a pending challenge to this player." }, 409);
+      }
+
+      const { data: created, error: createError } = await db
+        .from("arena_challenges")
+        .insert({
+          challenger_id: playerId,
+          opponent_id: opponent.id,
+          game_format: gameFormat,
+          status: "pending",
+        })
+        .select("*")
+        .single();
+
+      if (createError || !created) {
+        console.error("Challenge creation failed:", createError);
+        return reply({ error: "Could not send the challenge." }, 500);
+      }
+
+      return reply({
+        success: true,
+        challenge: {
+          ...created,
+          challenger_username: me.display_name,
+          opponent_username: opponent.display_name,
+          direction: "sent",
+        },
+      }, 201);
+    }
+
+    if (action === "respond") {
+      const challengeId = Number(body.challengeId);
+      const decision = body.decision;
+
+      if (
+        !Number.isSafeInteger(challengeId) ||
+        challengeId <= 0 ||
+        !["accepted", "declined"].includes(decision ?? "")
+      ) {
+        return reply({ error: "Invalid challenge response." }, 400);
+      }
+
+      const { data: updated, error } = await db
+        .from("arena_challenges")
+        .update({
+          status: decision,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", challengeId)
+        .eq("opponent_id", playerId)
+        .eq("status", "pending")
+        .select("*")
+        .maybeSingle();
+
+      if (error) {
+        console.error("Challenge response failed:", error);
+        return reply({ error: "Could not update the challenge." }, 500);
+      }
+
+      if (!updated) {
+        return reply({
+          error: "Challenge not found, already answered, or you are not the invited player.",
+        }, 409);
+      }
+
+      return reply({ success: true, challenge: updated });
+    }
+
+    if (action === "cancel") {
+      const challengeId = Number(body.challengeId);
+
+      if (!Number.isSafeInteger(challengeId) || challengeId <= 0) {
+        return reply({ error: "Invalid challenge ID." }, 400);
+      }
+
+      const { data: updated, error } = await db
+        .from("arena_challenges")
+        .update({
+          status: "cancelled",
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", challengeId)
+        .eq("challenger_id", playerId)
+        .eq("status", "pending")
+        .select("id, status")
+        .maybeSingle();
+
+      if (error) {
+        console.error("Challenge cancellation failed:", error);
+        return reply({ error: "Could not cancel the challenge." }, 500);
+      }
+
+      if (!updated) {
+        return reply({
+          error: "Challenge not found, already answered, or you are not the challenger.",
+        }, 409);
+      }
+
+      return reply({ success: true, challenge: updated });
+    }
+
+    return reply({
+      error: "Unknown action. Use list, create, respond, or cancel.",
+    }, 400);
+  } catch (error) {
+    console.error("Arena request failed:", error);
+    return reply({ error: "An unexpected server error occurred." }, 500);
+  }
+});
