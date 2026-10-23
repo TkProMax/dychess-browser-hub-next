@@ -265,7 +265,7 @@ await loadExistingTournaments();
   try {
     const { data: tournaments, error } = await db
       .from('tournaments')
-      .select('id, name, lichess_url, tournament_date, tournament_time')
+   .select('id, name, lichess_url, tournament_date, tournament_time, time_control')
       .order('id', { ascending: false });
 
     if (error) throw error;
