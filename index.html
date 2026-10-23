@@ -551,11 +551,15 @@ const timeText = tournament.tournament_time
   ? tournament.tournament_time.slice(0, 5) + ' UTC+1'
   : 'Time to be announced';
 
+const timeControl = tournament.time_control || '3+0';
+const timeControlType = ['1+0', '2+0', '3+0', '3+2', '5+0', '5+3']
+  .includes(timeControl) ? 'Blitz' : 'Rapid';
+
 details.textContent =
   '📅 ' + dateText + '\n' +
   '🕗 ' + timeText + '\n' +
- '♟ 3+0\n' +
-  'Blitz';
+  '♟ ' + timeControl + '\n' +
+  timeControlType;
 
 details.style.whiteSpace = 'pre-line';
       card.append(title, details);
