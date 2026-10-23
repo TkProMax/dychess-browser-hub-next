@@ -106,6 +106,12 @@
   </form>
 
   <p id="tournamentStatus" role="status" aria-live="polite"></p>
+  
+<hr>
+<h3>Existing Tournaments</h3>
+<div id="existingTournaments">
+  <p>Sign in to load tournaments.</p>
+</div>
 </section>
     <p id="status" role="status" aria-live="polite"></p>
     <p><a href="index.html">Back to DYCHESS home</a></p>
@@ -158,12 +164,14 @@
 
         status.textContent = 'Admin access verified! Login is working.';
         document.getElementById('tournamentDashboard').hidden = false;
+        await loadExistingTournaments();
       } catch (error) {
         status.textContent = error.message || 'Login failed. Please try again.';
       } finally {
         button.disabled = false;
       }
     });
+    let editingTournamentId = null;
     document.getElementById('tournamentForm').addEventListener('submit', async (event) => {
   event.preventDefault();
 
@@ -192,25 +200,112 @@
       throw new Error('Please sign in again before publishing.');
     }
 
-    const { error } = await db
-      .from('tournaments')
-      .insert({
-        name: name,
-        lichess_url: lichessUrl,
-        tournament_date: tournamentDate,
-        tournament_time: tournamentTime
-      });
+  let saveQuery;
 
-    if (error) throw error;
+const tournamentData = {
+  name: name,
+  lichess_url: lichessUrl,
+  tournament_date: tournamentDate,
+  tournament_time: tournamentTime
+};
 
-    status.textContent = 'Tournament published successfully!';
-    document.getElementById('tournamentForm').reset();
+if (editingTournamentId !== null) {
+  saveQuery = db
+    .from('tournaments')
+    .update(tournamentData)
+    .eq('id', editingTournamentId);
+} else {
+  saveQuery = db
+    .from('tournaments')
+    .insert(tournamentData);
+}
+
+const { error } = await saveQuery;
+
+if (error) throw error;
+
+  status.textContent = editingTournamentId !== null
+  ? 'Tournament updated successfully!'
+  : 'Tournament published successfully!';
+
+document.getElementById('tournamentForm').reset();
+editingTournamentId = null;
+document.getElementById('saveTournamentButton').textContent = 'Publish Tournament';
+
+await loadExistingTournaments();
   } catch (error) {
     status.textContent = error.message || 'Could not publish tournament.';
   } finally {
     button.disabled = false;
   }
 });
+  async function loadExistingTournaments() {
+  const container = document.getElementById('existingTournaments');
+  container.textContent = 'Loading tournaments...';
+
+  try {
+    const { data: tournaments, error } = await db
+      .from('tournaments')
+      .select('id, name, lichess_url, tournament_date, tournament_time')
+      .order('id', { ascending: false });
+
+    if (error) throw error;
+
+    container.replaceChildren();
+
+    if (!tournaments || tournaments.length === 0) {
+      container.textContent = 'No tournaments have been published yet.';
+      return;
+    }
+
+    tournaments.forEach((tournament) => {
+      const item = document.createElement('div');
+      item.style.padding = '12px';
+      item.style.marginBottom = '10px';
+      item.style.border = '1px solid #38523b';
+      item.style.borderRadius = '10px';
+
+      const title = document.createElement('strong');
+      title.textContent = tournament.name;
+
+      const details = document.createElement('p');
+      details.textContent =
+        `${tournament.tournament_date || 'Date not set'} · ` +
+        `${tournament.tournament_time || 'Time not set'}`;
+
+      const link = document.createElement('a');
+      link.href = tournament.lichess_url;
+      link.textContent = 'Open Lichess tournament';
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+
+      const editButton = document.createElement('button');
+      editButton.type = 'button';
+      editButton.textContent = 'Edit';
+      editButton.style.marginLeft = '10px';
+
+      editButton.addEventListener('click', () => {
+        editingTournamentId = tournament.id;
+document.getElementById('saveTournamentButton').textContent = 'Save Changes';
+        
+        document.getElementById('tournamentName').value = tournament.name || '';
+        document.getElementById('lichessUrl').value = tournament.lichess_url || '';
+        document.getElementById('tournamentDate').value = tournament.tournament_date || '';
+        document.getElementById('tournamentTime').value = tournament.tournament_time || '';
+
+        document.getElementById('tournamentStatus').textContent =
+          `Tournament selected for editing. ID: ${tournament.id}.`;
+        document.getElementById('tournamentName').focus();
+      });
+
+      item.append(title, details, link, editButton);
+      container.appendChild(item);
+    });
+  } catch (error) {
+    container.textContent =
+      error.message || 'Could not load existing tournaments.';
+  }
+}
   </script>
 </body>
 </html>
