@@ -311,6 +311,7 @@ document.getElementById('saveTournamentButton').textContent = 'Save Changes';
         document.getElementById('lichessUrl').value = tournament.lichess_url || '';
         document.getElementById('tournamentDate').value = tournament.tournament_date || '';
         document.getElementById('tournamentTime').value = tournament.tournament_time || '';
+        document.getElementById('tournamentTimeControl').value = tournament.time_control || '3+0';
 
         document.getElementById('tournamentStatus').textContent =
           `Tournament selected for editing. ID: ${tournament.id}.`;
