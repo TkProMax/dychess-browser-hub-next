@@ -518,7 +518,7 @@ async function loadTournaments() {
   try {
     const { data, error } = await window.dychessDB
       .from('tournaments')
-      .select('id, name, lichess_url, tournament_date, tournament_time')
+      .select('id, name, lichess_url, tournament_date, tournament_time, time_control')
       .order('tournament_date', { ascending: true });
 
     if (error) throw error;
