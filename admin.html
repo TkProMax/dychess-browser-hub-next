@@ -220,10 +220,15 @@ if (editingTournamentId !== null) {
     .insert(tournamentData);
 }
 
-const { error } = await saveQuery;
+const { data: savedTournament, error } = await saveQuery.select();
 
 if (error) throw error;
 
+if (!savedTournament || savedTournament.length === 0) {
+  throw new Error(
+    'No tournament was updated. Check the tournament ID and Supabase update permissions.'
+  );
+}
   status.textContent = editingTournamentId !== null
   ? 'Tournament updated successfully!'
   : 'Tournament published successfully!';
