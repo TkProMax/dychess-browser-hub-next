@@ -223,6 +223,7 @@
         const { data, error } = await dychessDB
           .from('players')
           .select('display_name, lichess_username, dychess_points')
+          .gt('dychess_points', 0)
           .order('dychess_points', { ascending: false, nullsFirst: false })
           .order('display_name', { ascending: true });
 
