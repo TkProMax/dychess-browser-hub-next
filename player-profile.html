@@ -344,6 +344,8 @@ if (player.avatar_path) {
 
     editor.style.display = 'block';
     document.getElementById('avatarControls').style.display = 'block';
+    document.getElementById('displayNameEditor').style.display = 'block';
+document.getElementById('displayNameInput').value = player.display_name || '';
     const avatarFileInput = document.getElementById('avatarFileInput');
 const uploadAvatarButton = document.getElementById('uploadAvatarButton');
 const avatarStatus = document.getElementById('avatarStatus');
