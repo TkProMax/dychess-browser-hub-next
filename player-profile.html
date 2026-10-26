@@ -255,6 +255,16 @@
       player.display_name || player.lichess_username || 'DYCHESS Player';
 
     document.getElementById('playerName').textContent = displayName;
+    const playerAvatar = document.getElementById('playerAvatar');
+
+if (player.avatar_path) {
+  playerAvatar.src = dychessDB.storage
+    .from('player-avatars')
+    .getPublicUrl(player.avatar_path).data.publicUrl;
+} else {
+  playerAvatar.src =
+    'https://placehold.co/120x120/10251a/d9b45b?text=DYCHESS';
+}
     document.getElementById('playerUsername').textContent =
       player.lichess_username
         ? 'Lichess: ' + player.lichess_username
