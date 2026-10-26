@@ -390,6 +390,45 @@ avatarFileInput.onchange = async () => {
     uploadAvatarButton.disabled = false;
   }
 };
+    document.getElementById('removeAvatarButton').onclick = async () => {
+  const removeButton = document.getElementById('removeAvatarButton');
+  const avatarStatus = document.getElementById('avatarStatus');
+
+  removeButton.disabled = true;
+  avatarStatus.textContent = 'Removing picture...';
+
+  try {
+    const response = await fetch(
+      'https://rpfowuqlhboslhmvjelc.supabase.co/functions/v1/manage-player-avatar',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': dychessDB.supabaseKey,
+          'x-dychess-session': token
+        },
+        body: JSON.stringify({ action: 'remove' })
+      }
+    );
+
+    const result = await response.json();
+
+    if (!response.ok || !result.success) {
+      throw new Error(result.error || 'Could not remove picture.');
+    }
+
+    playerAvatar.src =
+      'https://placehold.co/120x120/10251a/d9b45b?text=DYCHESS';
+
+    avatarStatus.textContent = 'Profile picture removed successfully!';
+  } catch (error) {
+    console.error('Avatar removal failed:', error);
+    avatarStatus.textContent =
+      error.message || 'Could not remove picture. Please try again.';
+  } finally {
+    removeButton.disabled = false;
+  }
+};
     bioInput.value = savedBio;
     bioCounter.textContent = bioInput.value.length + '/300 characters';
 
