@@ -114,6 +114,37 @@
     <section class="profile-card">
       <div class="avatar" id="avatar">D</div>
 
+      <div id="avatarSection" style="margin: 0 auto 18px; text-align: center;">
+  <img
+    id="playerAvatar"
+    src="https://placehold.co/120x120/10251a/d9b45b?text=DYCHESS"
+    alt="Player profile picture"
+    style="width: 100px; height: 100px; border-radius: 50%; object-fit: cover; border: 2px solid #d9b45b;"
+  >
+</div>
+
+      <div id="avatarControls" style="display: none; margin: 0 auto 20px; text-align: center;">
+  <input
+    type="file"
+    id="avatarFileInput"
+    accept="image/jpeg,image/png,image/webp"
+    style="display: none;"
+  >
+
+  <button
+    type="button"
+    id="uploadAvatarButton"
+    style="background: #d9b45b; color: #07140e; padding: 8px 14px; border: none; border-radius: 6px; cursor: pointer; margin: 4px;"
+  >Upload / Change Picture</button>
+
+  <button
+    type="button"
+    id="removeAvatarButton"
+    style="background: transparent; color: #d9b45b; padding: 8px 14px; border: 1px solid #6e592a; border-radius: 6px; cursor: pointer; margin: 4px;"
+  >Remove Picture</button>
+
+  <p id="avatarStatus" role="status" style="font-size: 13px;"></p>
+</div>
       <h1 id="playerName">Loading profile...</h1>
       <div class="username" id="playerUsername"></div>
       <div id="playerBio" style="margin: 16px 0 24px; color: #b9c9bc; line-height: 1.6; overflow-wrap: anywhere;">
