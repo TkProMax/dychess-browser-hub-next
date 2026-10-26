@@ -155,7 +155,7 @@
       try {
         const { data, error } = await dychessDB
           .from('players')
-          .select('display_name, lichess_username, dychess_points');
+          .select('display_name, lichess_username, dychess_points, bio');
 
         if (error) throw error;
 
