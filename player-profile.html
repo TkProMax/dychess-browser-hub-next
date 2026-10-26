@@ -177,68 +177,161 @@
       'sb_publishable_K5Fzinv7_Ac0gpaQc2C6Lg_3KstrDKY'
     );
 
-    async function loadPlayerProfile() {
-      const params = new URLSearchParams(window.location.search);
-      const username = params.get('username');
-      const status = document.getElementById('profileStatus');
+  async function loadPlayerProfile() {
+  const params = new URLSearchParams(window.location.search);
+  const username = params.get('username');
+  const status = document.getElementById('profileStatus');
+  const editor = document.getElementById('bioEditor');
+  const signIn = document.getElementById('bioSignIn');
+  const bioInput = document.getElementById('bioInput');
+  const bioCounter = document.getElementById('bioCounter');
+  const saveButton = document.getElementById('saveBioButton');
+  const editStatus = document.getElementById('bioEditStatus');
 
-      if (!username) {
-        document.getElementById('playerName').textContent =
-          'Profile not found';
-        status.textContent =
-          'No player username was provided. Open a profile from the leaderboard.';
-        return;
+  editor.style.display = 'none';
+  signIn.style.display = 'none';
+
+  if (!username) {
+    document.getElementById('playerName').textContent = 'Profile not found';
+    status.textContent =
+      'No player username was provided. Open a profile from the leaderboard.';
+    return;
+  }
+
+  try {
+    const { data, error } = await dychessDB
+      .from('players')
+      .select('id, display_name, lichess_username, dychess_points, bio');
+
+    if (error) throw error;
+
+    const player = (data || []).find(item =>
+      (item.lichess_username &&
+        item.lichess_username.toLowerCase() === username.toLowerCase()) ||
+      (item.display_name &&
+        item.display_name.toLowerCase() === username.toLowerCase())
+    );
+
+    if (!player) {
+      document.getElementById('playerName').textContent = 'Profile not found';
+      document.getElementById('playerPoints').textContent = '—';
+      status.textContent = 'This player could not be found.';
+      return;
+    }
+
+    const displayName =
+      player.display_name || player.lichess_username || 'DYCHESS Player';
+
+    document.getElementById('playerName').textContent = displayName;
+    document.getElementById('playerUsername').textContent =
+      player.lichess_username
+        ? 'Lichess: ' + player.lichess_username
+        : 'Lichess username not available';
+
+    const savedBio = player.bio?.trim() || '';
+    document.getElementById('playerBio').textContent =
+      savedBio || 'No bio added yet.';
+
+    document.getElementById('avatar').textContent =
+      displayName.charAt(0).toUpperCase();
+
+    document.getElementById('playerPoints').textContent =
+      player.dychess_points ?? 0;
+
+    status.textContent = 'DYCHESS player profile';
+
+    const token = localStorage.getItem('dychess_player_session');
+    const expiry = localStorage.getItem('dychess_player_session_expiry');
+
+    if (!token || !expiry || new Date(expiry).getTime() <= Date.now()) {
+      signIn.style.display = 'block';
+      document.getElementById('bioSignInLink').href =
+        'player-login.html?next=' +
+        encodeURIComponent(window.location.pathname + window.location.search);
+      return;
+    }
+
+    const validationResponse = await fetch(
+      'https://rpfowuqlhboslhmvjelc.supabase.co/functions/v1/validate-lichess-player-session',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': dychessDB.supabaseKey,
+          'x-dychess-session': token
+        },
+        body: JSON.stringify({})
       }
+    );
+
+    const validation = await validationResponse.json();
+
+    if (!validationResponse.ok || !validation.valid) {
+      signIn.style.display = 'block';
+      document.getElementById('bioSignInLink').href =
+        'player-login.html?next=' +
+        encodeURIComponent(window.location.pathname + window.location.search);
+      return;
+    }
+
+    // Only the verified owner of this database record can edit its bio.
+    if (String(validation.player.id) !== String(player.id)) {
+      return;
+    }
+
+    editor.style.display = 'block';
+    bioInput.value = savedBio;
+    bioCounter.textContent = bioInput.value.length + '/300 characters';
+
+    bioInput.oninput = () => {
+      bioCounter.textContent = bioInput.value.length + '/300 characters';
+    };
+
+    saveButton.onclick = async () => {
+      saveButton.disabled = true;
+      editStatus.textContent = 'Saving bio...';
 
       try {
-        const { data, error } = await dychessDB
-          .from('players')
-          .select('display_name, lichess_username, dychess_points, bio');
-
-        if (error) throw error;
-
-        const player = (data || []).find(item =>
-          (item.lichess_username &&
-            item.lichess_username.toLowerCase() === username.toLowerCase()) ||
-          (item.display_name &&
-            item.display_name.toLowerCase() === username.toLowerCase())
+        const response = await fetch(
+          'https://rpfowuqlhboslhmvjelc.supabase.co/functions/v1/update-player-bio',
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'apikey': dychessDB.supabaseKey,
+              'x-dychess-session': token
+            },
+            body: JSON.stringify({ bio: bioInput.value })
+          }
         );
 
-        if (!player) {
-          document.getElementById('playerName').textContent =
-            'Profile not found';
-          status.textContent =
-            'This player could not be found.';
-          document.getElementById('playerPoints').textContent = '—';
-          return;
+        const result = await response.json();
+
+        if (!response.ok || !result.success) {
+          throw new Error(result.error || 'Could not save your bio.');
         }
 
-        const displayName =
-          player.display_name || player.lichess_username || 'DYCHESS Player';
-
-        document.getElementById('playerName').textContent = displayName;
-        document.getElementById('playerUsername').textContent =
-          player.lichess_username
-            ? 'Lichess: ' + player.lichess_username
-            : 'Lichess username not available';
         document.getElementById('playerBio').textContent =
-  player.bio?.trim() || 'No bio added yet.';
+          result.bio || 'No bio added yet.';
 
-        document.getElementById('avatar').textContent =
-          displayName.charAt(0).toUpperCase();
-
-        document.getElementById('playerPoints').textContent =
-          player.dychess_points ?? 0;
-
-        status.textContent = 'DYCHESS player profile';
+        bioInput.value = result.bio || '';
+        bioCounter.textContent = bioInput.value.length + '/300 characters';
+        editStatus.textContent = 'Bio saved successfully!';
       } catch (error) {
-        console.error('Could not load player profile:', error);
-        document.getElementById('playerName').textContent =
-          'Unable to load profile';
-        status.textContent =
-          'Please try again later.';
+        console.error('Bio save failed:', error);
+        editStatus.textContent =
+          error.message || 'Could not save your bio. Please try again.';
+      } finally {
+        saveButton.disabled = false;
       }
-    }
+    };
+  } catch (error) {
+    console.error('Could not load player profile:', error);
+    document.getElementById('playerName').textContent =
+      'Unable to load profile';
+    status.textContent = 'Please try again later.';
+  }
+}
 
     loadPlayerProfile();
   </script>
