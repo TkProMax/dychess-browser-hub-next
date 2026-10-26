@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DYCHESS Player Profile</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 24px;
+      min-height: 100vh;
+      background: #07140e;
+      color: #f4f4f4;
+      font-family: Arial, sans-serif;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 700px;
+      margin: 35px auto;
+    }
+
+    .brand {
+      color: #d9b45b;
+      font-weight: bold;
+      letter-spacing: 3px;
+      text-align: center;
+      margin-bottom: 28px;
+    }
+
+    .profile-card {
+      background: #10251a;
+      border: 1px solid #36543c;
+      border-radius: 16px;
+      padding: 32px 24px;
+      text-align: center;
+    }
+
+    .avatar {
+      width: 86px;
+      height: 86px;
+      margin: 0 auto 18px;
+      border-radius: 50%;
+      background: #1b3927;
+      border: 2px solid #d9b45b;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #d9b45b;
+      font-size: 32px;
+      font-weight: bold;
+    }
+
+    h1 {
+      margin: 0 0 10px;
+      overflow-wrap: anywhere;
+    }
+
+    .username {
+      color: #b9c9bc;
+      margin-bottom: 28px;
+    }
+
+    .points-box {
+      background: #07140e;
+      border: 1px solid #6e592a;
+      border-radius: 12px;
+      padding: 22px;
+      margin-top: 20px;
+    }
+
+    .points-label {
+      color: #b9c9bc;
+      font-size: 14px;
+    }
+
+    .points {
+      color: #d9b45b;
+      font-size: 36px;
+      font-weight: bold;
+      margin-top: 8px;
+    }
+
+    .status {
+      color: #b9c9bc;
+      text-align: center;
+      line-height: 1.6;
+    }
+
+    .back-link {
+      display: inline-block;
+      margin-top: 24px;
+      color: #d9b45b;
+      text-decoration: none;
+    }
+
+    .back-link:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+
+<body>
+  <main class="container">
+    <div class="brand">DYCHESS</div>
+
+    <section class="profile-card">
+      <div class="avatar" id="avatar">D</div>
+
+      <h1 id="playerName">Loading profile...</h1>
+      <div class="username" id="playerUsername"></div>
+
+      <div class="points-box">
+        <div class="points-label">DYCHESS POINTS</div>
+        <div class="points" id="playerPoints">—</div>
+      </div>
+
+      <p class="status" id="profileStatus" aria-live="polite">
+        Loading player information...
+      </p>
+    </section>
+
+    <div style="text-align:center">
+      <a class="back-link" href="leaderboard.html">
+        ← Back to Leaderboard
+      </a>
+    </div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    const dychessDB = window.supabase.createClient(
+      'https://rpfowuqlhboslhmvjelc.supabase.co',
+      'sb_publishable_K5Fzinv7_Ac0gpaQc2C6Lg_3KstrDKY'
+    );
+
+    async function loadPlayerProfile() {
+      const params = new URLSearchParams(window.location.search);
+      const username = params.get('username');
+      const status = document.getElementById('profileStatus');
+
+      if (!username) {
+        document.getElementById('playerName').textContent =
+          'Profile not found';
+        status.textContent =
+          'No player username was provided. Open a profile from the leaderboard.';
+        return;
+      }
+
+      try {
+        const { data, error } = await dychessDB
+          .from('players')
+          .select('display_name, lichess_username, dychess_points');
+
+        if (error) throw error;
+
+        const player = (data || []).find(item =>
+          (item.lichess_username &&
+            item.lichess_username.toLowerCase() === username.toLowerCase()) ||
+          (item.display_name &&
+            item.display_name.toLowerCase() === username.toLowerCase())
+        );
+
+        if (!player) {
+          document.getElementById('playerName').textContent =
+            'Profile not found';
+          status.textContent =
+            'This player could not be found.';
+          document.getElementById('playerPoints').textContent = '—';
+          return;
+        }
+
+        const displayName =
+          player.display_name || player.lichess_username || 'DYCHESS Player';
+
+        document.getElementById('playerName').textContent = displayName;
+        document.getElementById('playerUsername').textContent =
+          player.lichess_username
+            ? 'Lichess: ' + player.lichess_username
+            : 'Lichess username not available';
+
+        document.getElementById('avatar').textContent =
+          displayName.charAt(0).toUpperCase();
+
+        document.getElementById('playerPoints').textContent =
+          player.dychess_points ?? 0;
+
+        status.textContent = 'DYCHESS player profile';
+      } catch (error) {
+        console.error('Could not load player profile:', error);
+        document.getElementById('playerName').textContent =
+          'Unable to load profile';
+        status.textContent =
+          'Please try again later.';
+      }
+    }
+
+    loadPlayerProfile();
+  </script>
+</body>
+</html>
