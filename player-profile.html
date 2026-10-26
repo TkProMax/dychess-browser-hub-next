@@ -147,6 +147,27 @@
 </div>
       <h1 id="playerName">Loading profile...</h1>
       <div class="username" id="playerUsername"></div>
+      <div id="displayNameEditor" style="display: none; margin: 12px 0; text-align: center;">
+  <label for="displayNameInput" style="display: block; margin-bottom: 6px; color: #d9b45b;">
+    Your DYCHESS Display Name
+  </label>
+
+  <input
+    type="text"
+    id="displayNameInput"
+    maxlength="40"
+    placeholder="Enter your preferred name"
+    style="width: 100%; max-width: 280px; padding: 10px; border-radius: 6px; border: 1px solid #6e592a; background: #10251a; color: #ffffff;"
+  >
+
+  <button
+    type="button"
+    id="saveDisplayNameButton"
+    style="background: #d9b45b; color: #07140e; padding: 8px 14px; border: none; border-radius: 6px; cursor: pointer; margin: 8px;"
+  >Save Display Name</button>
+
+  <p id="displayNameStatus" role="status" style="font-size: 13px;"></p>
+</div>
       <div id="playerBio" style="margin: 16px 0 24px; color: #b9c9bc; line-height: 1.6; overflow-wrap: anywhere;">
   No bio added yet.
 </div>
