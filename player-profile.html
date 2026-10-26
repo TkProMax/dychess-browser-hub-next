@@ -186,6 +186,8 @@
           player.lichess_username
             ? 'Lichess: ' + player.lichess_username
             : 'Lichess username not available';
+        document.getElementById('playerBio').textContent =
+  player.bio?.trim() || 'No bio added yet.';
 
         document.getElementById('avatar').textContent =
           displayName.charAt(0).toUpperCase();
