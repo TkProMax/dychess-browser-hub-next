@@ -117,6 +117,41 @@
       <div id="playerBio" style="margin: 16px 0 24px; color: #b9c9bc; line-height: 1.6; overflow-wrap: anywhere;">
   No bio added yet.
 </div>
+    <div id="bioEditor" style="display: none; margin-top: 24px; text-align: left;">
+  <label for="bioInput" style="display: block; color: #d9b45b; margin-bottom: 10px;">
+    Edit Your Bio
+  </label>
+
+  <textarea
+    id="bioInput"
+    maxlength="300"
+    rows="4"
+    placeholder="Tell the DYCHESS community a little about yourself..."
+    style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #36543c; background: #07140e; color: #f4f4f4; font: inherit; resize: vertical;"
+  ></textarea>
+
+  <p id="bioCounter" style="color: #b9c9bc; font-size: 13px;">
+    0/300 characters
+  </p>
+
+  <button
+    id="saveBioButton"
+    type="button"
+    style="background: #d9b45b; color: #07140e; border: none; border-radius: 8px; padding: 12px 18px; font-weight: bold; cursor: pointer;"
+  >
+    Save Bio
+  </button>
+
+  <p id="bioEditStatus" role="status" style="color: #b9c9bc;"></p>
+</div>
+
+<p id="bioSignIn" style="display: none; margin-top: 20px;">
+  <a
+    id="bioSignInLink"
+    href="player-login.html"
+    style="color: #d9b45b;"
+  >Sign in with Lichess to edit your bio</a>
+</p>
 
       <div class="points-box">
         <div class="points-label">DYCHESS POINTS</div>
