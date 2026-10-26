@@ -244,11 +244,22 @@
           rankCell.className = 'rank';
           rankCell.textContent = index + 1;
 
-          const playerCell = document.createElement('td');
-          playerCell.textContent =
-            player.display_name ||
-            player.lichess_username ||
-            'Unknown Player';
+        const playerCell = document.createElement('td');
+
+const playerName = document.createElement('a');
+playerName.textContent =
+  player.display_name ||
+  player.lichess_username ||
+  'Unknown Player';
+
+playerName.href =
+  'player-profile.html?username=' +
+  encodeURIComponent(player.lichess_username || player.display_name || '');
+
+playerName.style.color = '#d9b45b';
+playerName.style.textDecoration = 'none';
+
+playerCell.appendChild(playerName);
 
           const pointsCell = document.createElement('td');
           pointsCell.className = 'points';
