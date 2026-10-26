@@ -280,7 +280,7 @@ if (player.avatar_path) {
     document.getElementById('playerPoints').textContent =
       player.dychess_points ?? 0;
 
-    status.textContent = 'DYCHESS player profile';
+    status.textContent = '';
 
     const token = localStorage.getItem('dychess_player_session');
     const expiry = localStorage.getItem('dychess_player_session_expiry');
