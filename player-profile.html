@@ -318,15 +318,41 @@ async function loadPlayerTrophies(playerId, username) {
 
     if (error) throw error;
 
-    const champion = (matches || []).find(match =>
+     const champion = (matches || []).find(match =>
       String(match.winner_id) === String(playerId)
     );
 
-    if (!champion) {
+    const trophies = [];
+
+    if ((username || '').toLowerCase() === 'winnie54321') {
+      trophies.push({
+        icon: '🏆',
+        title: 'Season 0 Champion',
+        detail: 'DYCHESS Season 0'
+      });
+    }
+
+    if (champion) {
+      trophies.push({
+        icon: '🏆',
+        title: 'DYCHESS CUP Champion',
+        detail: 'Official Cup winner'
+      });
+    }
+
+    if (trophies.length === 0) {
       container.innerHTML =
         '<p class="empty-achievements">No trophies earned yet.</p>';
       return;
     }
+
+    container.innerHTML = trophies.map(trophy => `
+      <div class="trophy-card">
+        <div class="trophy-icon">${trophy.icon}</div>
+        <div class="trophy-title">${trophy.title}</div>
+        <div class="trophy-detail">${trophy.detail}</div>
+      </div>
+    `).join('');
 
     container.innerHTML = `
       <div class="trophy-card">
