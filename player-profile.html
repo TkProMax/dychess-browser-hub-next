@@ -321,6 +321,13 @@ async function loadPlayerTrophies(playerId, username) {
     });
   }
 
+  if ((username || '').toLowerCase() === 'sirayula') {
+  trophies.push({
+    icon: '🏆',
+    title: 'Legends Match Winner',
+    detail: 'DYCHESS Legends Match'
+  });
+}
   try {
     const { data: matches, error } = await dychessDB
       .from('arena_tournament_matches')
