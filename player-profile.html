@@ -303,9 +303,16 @@
     );
 async function loadPlayerTrophies(playerId, username) {
   const container = document.getElementById('playerTrophies');
+  const trophies = [];
 
-  container.innerHTML =
-    '<p class="empty-achievements">Loading trophies...</p>';
+  // Season 0 Champion trophy for Winnie54321
+  if ((username || '').toLowerCase() === 'winnie54321') {
+    trophies.push({
+      icon: '🏆',
+      title: 'Season 0 Champion',
+      detail: 'DYCHESS Season 0'
+    });
+  }
 
   try {
     const { data: matches, error } = await dychessDB
@@ -318,19 +325,9 @@ async function loadPlayerTrophies(playerId, username) {
 
     if (error) throw error;
 
-     const champion = (matches || []).find(match =>
+    const champion = (matches || []).find(match =>
       String(match.winner_id) === String(playerId)
     );
-
-    const trophies = [];
-
-    if ((username || '').toLowerCase() === 'winnie54321') {
-      trophies.push({
-        icon: '🏆',
-        title: 'Season 0 Champion',
-        detail: 'DYCHESS Season 0'
-      });
-    }
 
     if (champion) {
       trophies.push({
@@ -339,33 +336,29 @@ async function loadPlayerTrophies(playerId, username) {
         detail: 'Official Cup winner'
       });
     }
+  } catch (error) {
+    console.error('Could not load DYCHESS CUP trophy:', error);
 
     if (trophies.length === 0) {
       container.innerHTML =
-        '<p class="empty-achievements">No trophies earned yet.</p>';
+        '<p class="empty-achievements">Trophies could not be loaded. Please try again later.</p>';
       return;
     }
-
-    container.innerHTML = trophies.map(trophy => `
-      <div class="trophy-card">
-        <div class="trophy-icon">${trophy.icon}</div>
-        <div class="trophy-title">${trophy.title}</div>
-        <div class="trophy-detail">${trophy.detail}</div>
-      </div>
-    `).join('');
-
-    container.innerHTML = `
-      <div class="trophy-card">
-        <div class="trophy-icon">🏆</div>
-        <div class="trophy-title">DYCHESS CUP Champion</div>
-        <div class="trophy-detail">Official Cup winner</div>
-      </div>
-    `;
-  } catch (error) {
-    console.error('Could not load player trophies:', error);
-    container.innerHTML =
-      '<p class="empty-achievements">Trophies could not be loaded.</p>';
   }
+
+  if (trophies.length === 0) {
+    container.innerHTML =
+      '<p class="empty-achievements">No trophies earned yet.</p>';
+    return;
+  }
+
+  container.innerHTML = trophies.map(trophy => `
+    <div class="trophy-card">
+      <div class="trophy-icon">${trophy.icon}</div>
+      <div class="trophy-title">${trophy.title}</div>
+      <div class="trophy-detail">${trophy.detail}</div>
+    </div>
+  `).join('');
 }
   async function loadPlayerProfile() {
   const params = new URLSearchParams(window.location.search);
