@@ -130,42 +130,45 @@
       font-size: 13px;
     }
 
-    .trophies-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
-      gap: 12px;
-    }
-
+ .trophies-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+}
     .empty-achievements {
       grid-column: 1 / -1;
       margin: 8px 0;
       color: #aeb8ad;
       font-size: 14px;
     }
-
-   .trophy-card {
-  padding: 8px 6px;
+.trophy-card {
+  min-width: 0;
+  padding: 6px 3px;
   border: 1px solid #705a29;
-  border-radius: 8px;
+  border-radius: 7px;
   background: #10251a;
+  box-sizing: border-box;
+  overflow-wrap: anywhere;
 }
 
-    .trophy-icon {
-      margin-bottom: 8px;
-      font-size: 30px;
-    }
+   .trophy-icon {
+  margin-bottom: 4px;
+  font-size: 20px;
+}
 
-    .trophy-title {
-      color: #d9b45b;
-      font-weight: bold;
-      font-size: 14px;
-    }
+.trophy-title {
+  color: #d9b45b;
+  font-weight: bold;
+  font-size: 11px;
+  line-height: 1.3;
+}
 
-    .trophy-detail {
-      margin-top: 6px;
-      color: #e0e4da;
-      font-size: 12px;
-    }
+.trophy-detail {
+  margin-top: 3px;
+  color: #e0e4da;
+  font-size: 10px;
+  line-height: 1.3;
+}
   </style>
 </head>
 
