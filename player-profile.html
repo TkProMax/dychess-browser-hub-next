@@ -301,7 +301,46 @@
       'https://rpfowuqlhboslhmvjelc.supabase.co',
       'sb_publishable_K5Fzinv7_Ac0gpaQc2C6Lg_3KstrDKY'
     );
+async function loadPlayerTrophies(playerId) {
+  const container = document.getElementById('playerTrophies');
 
+  container.innerHTML =
+    '<p class="empty-achievements">Loading trophies...</p>';
+
+  try {
+    const { data: matches, error } = await dychessDB
+      .from('arena_tournament_matches')
+      .select('tournament_id, round_number, match_number, winner_id, status')
+      .eq('round_number', 3)
+      .eq('match_number', 7)
+      .eq('status', 'completed')
+      .not('winner_id', 'is', null);
+
+    if (error) throw error;
+
+    const champion = (matches || []).find(match =>
+      String(match.winner_id) === String(playerId)
+    );
+
+    if (!champion) {
+      container.innerHTML =
+        '<p class="empty-achievements">No trophies earned yet.</p>';
+      return;
+    }
+
+    container.innerHTML = `
+      <div class="trophy-card">
+        <div class="trophy-icon">🏆</div>
+        <div class="trophy-title">DYCHESS CUP Champion</div>
+        <div class="trophy-detail">Official Cup winner</div>
+      </div>
+    `;
+  } catch (error) {
+    console.error('Could not load player trophies:', error);
+    container.innerHTML =
+      '<p class="empty-achievements">Trophies could not be loaded.</p>';
+  }
+}
   async function loadPlayerProfile() {
   const params = new URLSearchParams(window.location.search);
   const username = params.get('username');
