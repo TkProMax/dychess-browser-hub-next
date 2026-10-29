@@ -410,6 +410,7 @@ if (player.avatar_path) {
 
     document.getElementById('playerPoints').textContent =
       player.dychess_points ?? 0;
+        await loadPlayerTrophies(player.id);
 
     status.textContent = '';
 
