@@ -328,6 +328,15 @@ async function loadPlayerTrophies(playerId, username) {
     detail: ''
   });
 }
+
+  
+if ((username || '').toLowerCase() === 'tangible_ay') {
+  trophies.push({
+    icon: '🏆',
+    title: 'DYCHESS CUP Winner',
+    detail: 'DYCHESS CUP Winner'
+  });
+}
   try {
     const { data: matches, error } = await dychessDB
       .from('arena_tournament_matches')
