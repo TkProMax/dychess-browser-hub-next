@@ -848,6 +848,60 @@
             "Status: " + tournament.status.replaceAll("_", " ");
           area.appendChild(status);
 
+          if (tournament.status === "registration") {
+  const registerButton = document.createElement("button");
+  registerButton.textContent =
+  "Register & Pay ₦" + Number(tournament.entry_fee).toLocaleString("en-NG");
+  registerButton.className = "cup-register-button";
+
+  registerButton.addEventListener("click", async () => {
+    if (!sessionToken) {
+      showNotice(
+        "Please sign in with your verified Lichess account first.",
+        "error"
+      );
+      signInLink.hidden = false;
+      return;
+    }
+
+    registerButton.disabled = true;
+    registerButton.textContent = "Preparing payment...";
+
+    try {
+      const response = await fetch(
+        SUPABASE_URL + "/functions/v1/bachs-cup-checkout",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "apikey": SUPABASE_PUBLISHABLE_KEY,
+            "x-dychess-session": sessionToken
+          },
+          body: JSON.stringify({})
+        }
+      );
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success || !result.checkout_url) {
+        throw new Error(
+          result.error || "Could not start your payment."
+        );
+      }
+
+      window.location.href = result.checkout_url;
+
+    } catch (error) {
+      showNotice(error.message, "error");
+      registerButton.disabled = false;
+    registerButton.textContent =
+  "Register & Pay ₦" + Number(tournament.entry_fee).toLocaleString("en-NG");
+    }
+  });
+
+  area.appendChild(registerButton);
+}
+
           const tournamentMatches = matches
             .filter(
               (match) =>
