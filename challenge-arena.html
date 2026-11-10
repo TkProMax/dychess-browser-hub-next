@@ -400,7 +400,10 @@
 
     let sessionToken = "";
     let currentUsername = "";
-
+let cupPaymentNoticeActive =
+  ["success", "cancelled"].includes(
+    new URLSearchParams(window.location.search).get("cup_payment")
+  );
     function showNotice(message, type = "success") {
       notice.textContent = message;
       notice.className = "show " + type;
