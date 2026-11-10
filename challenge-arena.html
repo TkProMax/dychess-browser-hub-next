@@ -824,6 +824,51 @@
         const matches = result.matches || [];
         const players = result.players || [];
 
+        const params = new URLSearchParams(window.location.search);
+const cupPayment = params.get("cup_payment");
+
+if (cupPayment === "success") {
+  const currentPlayer = players.find((player) =>
+    (player.lichess_username || player.display_name || "")
+      .toLowerCase() === currentUsername.toLowerCase()
+  );
+
+  const isPaid = currentPlayer && registrations.some(
+    (entry) => Number(entry.player_id) === Number(currentPlayer.id)
+  );
+
+  if (isPaid) {
+    showNotice(
+      "Registration Successful! Your payment has been confirmed and your place in DYCHESS CUP is secured. Good luck!",
+      "success"
+    );
+
+    window.history.replaceState(
+      {},
+      document.title,
+      window.location.pathname + window.location.hash
+    );
+  } else {
+    showNotice(
+      "Your payment is being verified. Please refresh this page in a few seconds.",
+      "success"
+    );
+  }
+}
+
+if (cupPayment === "cancelled") {
+  showNotice(
+    "Your registration payment was cancelled. You can try again when registration is open.",
+    "error"
+  );
+
+  window.history.replaceState(
+    {},
+    document.title,
+    window.location.pathname + window.location.hash
+  );
+}
+
         if (tournaments.length === 0) {
           area.textContent = "No DYCHESS CUP tournament is available yet.";
           return;
