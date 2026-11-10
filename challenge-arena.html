@@ -534,7 +534,9 @@ let cupPaymentNoticeActive =
     }
 
     async function loadChallenges() {
-      clearNotice();
+      if (!cupPaymentNoticeActive) {
+  clearNotice();
+}
 
       try {
         const result = await api("list");
