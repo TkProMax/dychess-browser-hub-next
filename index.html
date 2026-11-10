@@ -587,5 +587,46 @@ details.style.whiteSpace = 'pre-line';
 
 loadTournaments();
 </script>
+  <script>
+(function () {
+  const params = new URLSearchParams(window.location.search);
+  const donationStatus = params.get('donation');
+
+  if (donationStatus !== 'success' && donationStatus !== 'cancelled') {
+    return;
+  }
+
+  const notice = document.createElement('div');
+
+  notice.style.cssText = `
+    max-width: 850px;
+    margin: 20px auto;
+    padding: 18px 22px;
+    border-radius: 10px;
+    background: #10251a;
+    border: 1px solid #d9b45b;
+    color: #f4f4ed;
+    text-align: center;
+    font-weight: bold;
+  `;
+
+  if (donationStatus === 'success') {
+    notice.textContent =
+      'Thank you for supporting DYCHESS! Your donation has been received.';
+  } else {
+    notice.textContent =
+      'Your donation checkout was cancelled. You can try again whenever you are ready.';
+  }
+
+  document.body.prepend(notice);
+
+  // Remove the donation status from the address bar.
+  window.history.replaceState(
+    {},
+    document.title,
+    window.location.pathname + window.location.hash
+  );
+})();
+</script>
 </body>
 </html>
