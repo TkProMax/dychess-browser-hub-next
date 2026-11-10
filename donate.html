@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Support DYCHESS</title>
+
+  <style>
+    :root {
+      --dark: #07140e;
+      --panel: #10251a;
+      --gold: #d9b45b;
+      --green: #7fae3d;
+      --text: #f4f4ed;
+      --muted: #b8c5b9;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--dark);
+      color: var(--text);
+      font-family: Arial, sans-serif;
+      line-height: 1.6;
+    }
+
+    header {
+      padding: 20px;
+      border-bottom: 1px solid #263b2d;
+    }
+
+    nav {
+      max-width: 850px;
+      margin: auto;
+    }
+
+    nav a {
+      color: var(--gold);
+      text-decoration: none;
+      font-weight: bold;
+    }
+
+    main {
+      max-width: 650px;
+      margin: 45px auto;
+      padding: 0 20px;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid #294333;
+      border-radius: 14px;
+      padding: 28px;
+    }
+
+    h1 {
+      color: var(--gold);
+      margin-top: 0;
+    }
+
+    h2 {
+      color: var(--gold);
+      font-size: 19px;
+    }
+
+    p, li {
+      color: var(--muted);
+    }
+
+    label {
+      display: block;
+      margin: 18px 0 7px;
+      font-weight: bold;
+    }
+
+    input {
+      width: 100%;
+      padding: 13px;
+      border-radius: 8px;
+      border: 1px solid #49634f;
+      background: #07140e;
+      color: white;
+      font-size: 16px;
+    }
+
+    button {
+      width: 100%;
+      margin-top: 22px;
+      padding: 14px;
+      border: 0;
+      border-radius: 8px;
+      background: var(--gold);
+      color: #10190b;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    #message {
+      margin-top: 16px;
+      font-size: 14px;
+      overflow-wrap: anywhere;
+    }
+
+    .back-link {
+      display: inline-block;
+      margin-top: 22px;
+      color: var(--gold);
+      text-decoration: none;
+    }
+
+    footer {
+      text-align: center;
+      color: var(--muted);
+      padding: 25px 15px;
+      font-size: 13px;
+    }
+  </style>
+</head>
+
+<body>
+
+<header>
+  <nav>
+    <a href="index.html">← Back to DYCHESS</a>
+  </nav>
+</header>
+
+<main>
+  <div class="panel">
+    <h1>Support DYCHESS</h1>
+
+    <p>
+      Your support helps us grow the DYCHESS chess community
+      and create more opportunities for players.
+    </p>
+
+    <h2>Your donation helps support:</h2>
+
+    <ul>
+      <li><strong>Tournament prizes</strong> – rewarding outstanding players.</li>
+      <li><strong>Chess activities</strong> – organising competitions and community events.</li>
+      <li><strong>Platform development</strong> – improving the DYCHESS website and player experience.</li>
+    </ul>
+
+    <p>
+      Every contribution, big or small, makes a difference.
+      Thank you for supporting DYCHESS!
+    </p>
+
+    <hr style="border-color:#294333; margin:25px 0;">
+
+    <h2>Make a Donation</h2>
+
+    <form id="donationForm">
+      <label for="amount">Donation Amount (₦)</label>
+      <input
+        type="number"
+        id="amount"
+        min="1"
+        max="100000000"
+        step="0.01"
+        placeholder="Enter any amount"
+        required
+      >
+
+      <label for="donorName">Your Name (Optional)</label>
+      <input
+        type="text"
+        id="donorName"
+        maxlength="80"
+        placeholder="Leave blank to donate anonymously"
+      >
+
+      <button type="submit" id="donateButton">
+        Continue to Payment
+      </button>
+
+      <p id="message" role="status" aria-live="polite"></p>
+    </form>
+  </div>
+
+  <a class="back-link" href="index.html">← Return to homepage</a>
+</main>
+
+<footer>
+  © 2026 DYCHESS. Built for the community.
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+  const dychessDB = window.supabase.createClient(
+    'https://rpfowuqlhboslhmvjelc.supabase.co',
+    'sb_publishable_K5Fzinv7_Ac0gpaQc2C6Lg_3KstrDKY'
+  );
+
+  const form = document.getElementById('donationForm');
+  const button = document.getElementById('donateButton');
+  const message = document.getElementById('message');
+
+  form.addEventListener('submit', async (event) => {
+    event.preventDefault();
+
+    const amount = Number(document.getElementById('amount').value);
+    const donorName = document.getElementById('donorName').value.trim();
+
+    if (!Number.isFinite(amount) || amount < 1 || amount > 100000000) {
+      message.textContent = 'Please enter a valid donation amount.';
+      return;
+    }
+
+    button.disabled = true;
+    button.textContent = 'Preparing payment...';
+    message.textContent = '';
+
+    try {
+      const { data, error } = await dychessDB.functions.invoke(
+        'bachs-donation-checkout',
+        {
+          body: {
+            amount,
+            donor_name: donorName
+          }
+        }
+      );
+
+      if (error) throw error;
+      if (!data || !data.success || !data.checkout_url) {
+        throw new Error(data?.error || 'Could not start payment.');
+      }
+
+      message.textContent = 'Redirecting you to secure payment...';
+      window.location.href = data.checkout_url;
+
+    } catch (error) {
+      console.error('Donation checkout error:', error);
+      message.textContent =
+        error.message || 'Payment could not be started. Please try again.';
+
+      button.disabled = false;
+      button.textContent = 'Continue to Payment';
+    }
+  });
+</script>
+
+</body>
+</html>
