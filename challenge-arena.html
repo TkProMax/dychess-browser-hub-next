@@ -257,6 +257,63 @@
   text-transform: uppercase;
   box-shadow: 0 0 12px rgba(217, 180, 91, 0.1);
 }
+    .cup-leaderboard {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 14px;
+  background: #09170f;
+  border: 1px solid #38523b;
+  border-radius: 12px;
+  overflow: hidden;
+  font-size: 13px;
+}
+
+.cup-leaderboard th {
+  padding: 12px 8px;
+  background: #12271b;
+  color: #d9b45b;
+  font-weight: 800;
+  text-align: center;
+  border-bottom: 1px solid #38523b;
+}
+
+.cup-leaderboard td {
+  padding: 11px 8px;
+  color: #f4f6ef;
+  text-align: center;
+  border-bottom: 1px solid rgba(56, 82, 59, 0.45);
+}
+
+.cup-leaderboard tr:last-child td {
+  border-bottom: none;
+}
+
+.cup-leaderboard .cup-qualified {
+  background: rgba(127, 174, 61, 0.12);
+}
+
+.cup-leaderboard .cup-qualified td:first-child {
+  color: #d9b45b;
+  font-weight: 800;
+}
+
+.cup-leaderboard-note {
+  margin-top: 12px;
+  color: #d9b45b;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+@media (max-width: 480px) {
+  .cup-leaderboard {
+    font-size: 11px;
+  }
+
+  .cup-leaderboard th,
+  .cup-leaderboard td {
+    padding: 9px 4px;
+  }
+}
   </style>
 </head>
 <body>
