@@ -1221,8 +1221,12 @@ if (leagueFixtures.length === 0) {
                   ? "Black won"
                   : "Completed";
             }
-gameRow.textContent =
-  `● ${white} vs ● ${black} — ${resultText}`;
+gameRow.innerHTML = `
+  <span class="cup-white-dot">●</span> ${white}
+  <span class="cup-vs">vs</span>
+  <span class="cup-black-dot">●</span> ${black}
+  <span class="cup-game-result">${resultText}</span>
+`;
 
             pairingBox.appendChild(gameRow);
           });
