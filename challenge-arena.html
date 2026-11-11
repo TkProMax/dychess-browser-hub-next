@@ -1081,6 +1081,101 @@ if (cupPayment === "cancelled") {
             note.className = "cup-leaderboard-note";
             area.appendChild(note);
           }
+
+          // DYCHESS CUP league fixtures.
+const leagueFixtures = matches
+  .filter(
+    (match) =>
+      Number(match.tournament_id) === Number(tournament.id) &&
+      match.stage === "league"
+  )
+  .sort((a, b) => {
+    if (Number(a.round_number) !== Number(b.round_number)) {
+      return Number(a.round_number) - Number(b.round_number);
+    }
+    return Number(a.match_number) - Number(b.match_number);
+  });
+
+const fixturesHeading = document.createElement("h3");
+fixturesHeading.textContent = "DYCHESS CUP — League Fixtures";
+area.appendChild(fixturesHeading);
+
+if (leagueFixtures.length === 0) {
+  const message = document.createElement("p");
+  message.textContent = "League fixtures will appear here.";
+  area.appendChild(message);
+} else {
+  for (let round = 1; round <= 7; round++) {
+    const roundFixtures = leagueFixtures.filter(
+      (match) => Number(match.round_number) === round ||
+        Number(match.round_number) === round + 7
+    );
+
+    const roundHeading = document.createElement("h4");
+    roundHeading.textContent = `Round ${round}`;
+    area.appendChild(roundHeading);
+
+    const pairings = new Map();
+
+    roundFixtures.forEach((match) => {
+      const pairingNumber = Number(match.match_number);
+      if (!pairings.has(pairingNumber)) {
+        pairings.set(pairingNumber, []);
+      }
+      pairings.get(pairingNumber).push(match);
+    });
+
+    [...pairings.entries()]
+      .sort((a, b) => a[0] - b[0])
+      .forEach(([pairingNumber, games]) => {
+        const pairingBox = document.createElement("div");
+        pairingBox.className = "cup-pairing-box";
+
+        const pairingTitle = document.createElement("p");
+        pairingTitle.className = "cup-pairing-title";
+        pairingTitle.textContent = `Pairing ${pairingNumber}`;
+        pairingBox.appendChild(pairingTitle);
+
+        games
+          .slice()
+          .sort((a, b) => {
+            const gameA = Number(a.round_number) > 7 ? 2 : 1;
+            const gameB = Number(b.round_number) > 7 ? 2 : 1;
+            return gameA - gameB;
+          })
+          .forEach((match) => {
+            const gameNumber =
+              Number(match.round_number) > 7 ? 2 : 1;
+
+            const gameRow = document.createElement("p");
+            gameRow.className = "cup-fixture-game";
+
+            const white = playerName(match.player1_id);
+            const black = playerName(match.player2_id);
+
+            let resultText = "Pending";
+
+            if (match.status === "completed") {
+              resultText =
+                match.result === "draw"
+                  ? "Draw"
+                  : match.result === "player1_win"
+                  ? "White won"
+                  : match.result === "player2_win"
+                  ? "Black won"
+                  : "Completed";
+            }
+
+            gameRow.textContent =
+              `Game ${gameNumber} · White: ${white} · Black: ${black} · ${resultText}`;
+
+            pairingBox.appendChild(gameRow);
+          });
+
+        area.appendChild(pairingBox);
+      });
+  }
+}
           const tournamentRegistrations = registrations.filter(
             (entry) =>
               Number(entry.tournament_id) === Number(tournament.id)
