@@ -964,55 +964,66 @@ if (cupPayment === "cancelled") {
                 a.match_number - b.match_number
             );
 
-          if (tournamentMatches.length === 0) {
+          // DYCHESS CUP league leaderboard.
+          const leaderboardHeading = document.createElement("h3");
+          leaderboardHeading.textContent = "DYCHESS CUP — League Standings";
+          area.appendChild(leaderboardHeading);
+
+          if (standings.length === 0) {
             const message = document.createElement("p");
-            message.textContent = "Matches have not been created yet.";
+            message.textContent = "League standings will appear when results are recorded.";
             area.appendChild(message);
+          } else {
+            const table = document.createElement("table");
+            table.className = "cup-leaderboard";
+
+            table.innerHTML = `
+              <thead>
+                <tr>
+                  <th>Rank</th>
+                  <th>Player</th>
+                  <th>P</th>
+                  <th>W</th>
+                  <th>D</th>
+                  <th>L</th>
+                  <th>Pts</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            `;
+
+            const tbody = table.querySelector("tbody");
+
+            standings.forEach((player) => {
+              const row = document.createElement("tr");
+
+              if (player.rank <= 4) {
+                row.className = "cup-qualified";
+              }
+
+              row.innerHTML = `
+                <td>${player.rank}</td>
+                <td></td>
+                <td>${player.played}</td>
+                <td>${player.wins}</td>
+                <td>${player.draws}</td>
+                <td>${player.losses}</td>
+                <td><strong>${player.points}</strong></td>
+              `;
+
+              const nameCell = row.children[1];
+              nameCell.textContent = player.display_name || player.username;
+
+              tbody.appendChild(row);
+            });
+
+            area.appendChild(table);
+
+            const note = document.createElement("p");
+            note.textContent = "Top 4 players qualify for the semifinals.";
+            note.className = "cup-leaderboard-note";
+            area.appendChild(note);
           }
-
-          tournamentMatches.forEach((match) => {
-            const card = document.createElement("div");
-            card.className = "cup-match";
-
-            const round = document.createElement("h4");
-            round.textContent =
-              (match.round_number === 1
-                ? "Quarter-final"
-                : match.round_number === 2
-                  ? "Semi-final"
-                  : "Final") +
-              " — Match " +
-              match.match_number;
-
-          const playersLine = document.createElement("div");
-playersLine.className = "cup-players";
-
-const player1Box = document.createElement("div");
-player1Box.className = "cup-player-box";
-player1Box.textContent = playerName(match.player1_id);
-
-const versus = document.createElement("div");
-versus.className = "cup-versus";
-versus.textContent = "VS";
-
-const player2Box = document.createElement("div");
-player2Box.className = "cup-player-box";
-player2Box.textContent = playerName(match.player2_id);
-
-playersLine.append(player1Box, versus, player2Box);
-          const resultLine = document.createElement("p");
-resultLine.className = match.winner_id
-  ? "cup-winner-result"
-  : "cup-match-status";
-
-resultLine.textContent = match.winner_id
-  ? "♛ WINNER: " + playerName(match.winner_id)
-  : "Status: " + match.status.replaceAll("_", " ");
-
-            card.append(round, playersLine, resultLine);
-            area.appendChild(card);
-          });
-
           const tournamentRegistrations = registrations.filter(
             (entry) =>
               Number(entry.tournament_id) === Number(tournament.id)
