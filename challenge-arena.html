@@ -934,6 +934,82 @@ let cupPaymentNoticeActive =
     }
   });
 
+    const recordCupLeagueResultButton = document.getElementById(
+  "recordCupLeagueResultButton"
+);
+
+recordCupLeagueResultButton.addEventListener("click", async () => {
+  const matchId = Number(
+    document.getElementById("cupLeagueMatchId").value
+  );
+  const resultValue = document.getElementById("cupLeagueResult").value;
+
+  if (!Number.isSafeInteger(matchId) || matchId <= 0 || !resultValue) {
+    cupAdminMessage.textContent =
+      "Enter a valid league match ID and select a result.";
+    return;
+  }
+
+  const resultLabels = {
+    player1_win: "White wins",
+    draw: "Draw",
+    player2_win: "Black wins"
+  };
+
+  if (!window.confirm(
+    `Record ${resultLabels[resultValue]} for league Match ID ${matchId}?`
+  )) {
+    return;
+  }
+
+  recordCupLeagueResultButton.disabled = true;
+  cupAdminMessage.textContent = "Recording league result...";
+
+  try {
+    const { data, error } = await adminDb.auth.getSession();
+    if (error) throw error;
+
+    const session = data.session;
+    if (!session) {
+      throw new Error("Please sign in through Admin.html first.");
+    }
+
+    const response = await fetch(
+      SUPABASE_URL + "/functions/v1/arena-cup",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "apikey": SUPABASE_PUBLISHABLE_KEY,
+          "Authorization": "Bearer " + session.access_token
+        },
+        body: JSON.stringify({
+          action: "admin_record_league_result",
+          matchId,
+          result: resultValue
+        })
+      }
+    );
+
+    const result = await response.json().catch(() => ({}));
+
+    if (!response.ok || !result.success) {
+      throw new Error(result.error || "Could not record league result.");
+    }
+
+    cupAdminMessage.textContent =
+      result.message || "League result recorded successfully.";
+
+    document.getElementById("cupLeagueMatchId").value = "";
+    document.getElementById("cupLeagueResult").value = "";
+
+    await loadCupTournament();
+  } catch (error) {
+    cupAdminMessage.textContent = error.message;
+  } finally {
+    recordCupLeagueResultButton.disabled = false;
+  }
+});
     checkCupAdmin();
    async function loadCupTournament() {
       const area = document.getElementById("cupTournamentArea");
