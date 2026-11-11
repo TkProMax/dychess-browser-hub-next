@@ -471,6 +471,31 @@
     Record Winner
   </button>
 
+ 
+  <hr>
+
+  <h3>Admin: Record League Result</h3>
+
+  <label for="cupLeagueMatchId">League Game Match ID</label>
+  <input
+    type="number"
+    id="cupLeagueMatchId"
+    min="1"
+    placeholder="Enter league match ID"
+  >
+
+  <label for="cupLeagueResult">Game Result</label>
+  <select id="cupLeagueResult">
+    <option value="">Select result</option>
+    <option value="player1_win">White wins</option>
+    <option value="draw">Draw</option>
+    <option value="player2_win">Black wins</option>
+  </select>
+
+  <button type="button" id="recordCupLeagueResultButton">
+    Record League Result
+  </button>
+
   <p id="cupAdminMessage" role="status"></p>
 </div>
 
