@@ -1197,8 +1197,11 @@ if (leagueFixtures.length === 0) {
                   : "Completed";
             }
 
-            gameRow.textContent =
-              `Game ${gameNumber} · White: ${white} · Black: ${black} · ${resultText}`;
+           gameRow.innerHTML = `
+  <span class="cup-white-dot">●</span> ${escapeHTML(white)}
+  <span class="cup-vs">vs</span>
+  <span class="cup-black-dot">●</span> ${escapeHTML(black)}
+  <span class="cup-game-result">${escapeHTML(resultText)}</span>
 
             pairingBox.appendChild(gameRow);
           });
