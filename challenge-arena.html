@@ -828,6 +828,7 @@ let cupPaymentNoticeActive =
         const registrations = result.registrations || [];
         const matches = result.matches || [];
         const players = result.players || [];
+        const standings = result.standings || [];
 
         const params = new URLSearchParams(window.location.search);
 const cupPayment = params.get("cup_payment");
