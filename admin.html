@@ -124,6 +124,49 @@
 <div id="existingTournaments">
   <p>Sign in to load tournaments.</p>
 </div>
+  <hr>
+
+<h2>Leaderboard Points Management</h2>
+<p>Add or deduct points from a player's main DYCHESS leaderboard total.</p>
+
+<form id="pointsForm">
+  <label for="pointsUsername">Player's Lichess username</label>
+  <input
+    id="pointsUsername"
+    type="text"
+    placeholder="Enter Lichess username"
+    required
+  >
+
+  <label for="pointsAction">Action</label>
+  <select id="pointsAction" required>
+    <option value="add">Add points</option>
+    <option value="deduct">Deduct points</option>
+  </select>
+
+  <label for="pointsAmount">Number of points</label>
+  <input
+    id="pointsAmount"
+    type="number"
+    min="1"
+    step="1"
+    required
+  >
+
+  <label for="pointsReason">Reason</label>
+  <input
+    id="pointsReason"
+    type="text"
+    placeholder="e.g. Tournament bonus"
+    required
+  >
+
+  <button id="adjustPointsButton" type="submit">
+    Confirm Points Adjustment
+  </button>
+</form>
+
+<p id="pointsStatus" role="status" aria-live="polite"></p>
 </section>
     <p id="status" role="status" aria-live="polite"></p>
     <p><a href="index.html">Back to DYCHESS home</a></p>
