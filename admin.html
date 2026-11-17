@@ -226,6 +226,65 @@
         button.disabled = false;
       }
     });
+    
+document.getElementById('pointsForm').addEventListener('submit', async (event) => {
+  event.preventDefault();
+
+  const button = document.getElementById('adjustPointsButton');
+  const status = document.getElementById('pointsStatus');
+
+  button.disabled = true;
+  status.textContent = 'Processing points adjustment...';
+
+  try {
+    const username = document.getElementById('pointsUsername').value.trim();
+    const action = document.getElementById('pointsAction').value;
+    const amount = Number(document.getElementById('pointsAmount').value);
+    const reason = document.getElementById('pointsReason').value.trim();
+
+    if (!username || !Number.isSafeInteger(amount) || amount <= 0 || !reason) {
+      throw new Error('Please complete all fields with valid information.');
+    }
+
+    const { data: sessionData } = await db.auth.getSession();
+
+    if (!sessionData.session) {
+      throw new Error('Your admin session has expired. Please sign in again.');
+    }
+
+    const { data, error } = await db.functions.invoke(
+      'admin-adjust-leaderboard-points',
+      {
+        body: {
+          username,
+          action,
+          amount,
+          reason
+        }
+      }
+    );
+
+    if (error) throw error;
+    if (data?.error) throw new Error(data.error);
+    if (!data?.success) throw new Error('Points adjustment was not confirmed.');
+
+    const actionText = action === 'add' ? 'added to' : 'deducted from';
+
+    status.textContent =
+      `${amount} points ${actionText} ${data.username}. ` +
+      `Previous balance: ${data.old_points}. ` +
+      `New balance: ${data.new_points}.`;
+
+    document.getElementById('pointsForm').reset();
+
+  } catch (error) {
+    console.error('Leaderboard points adjustment failed:', error);
+    status.textContent = error.message || 'Could not adjust leaderboard points.';
+  } finally {
+    button.disabled = false;
+  }
+});
+
     let editingTournamentId = null;
     document.getElementById('tournamentForm').addEventListener('submit', async (event) => {
   event.preventDefault();
