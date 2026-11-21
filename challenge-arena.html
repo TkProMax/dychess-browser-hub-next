@@ -1251,6 +1251,70 @@ if (cupPayment === "cancelled") {
                 a.match_number - b.match_number
             );
 
+          // DYCHESS CUP semifinals.
+const semifinalMatches = matches
+  .filter(
+    (match) =>
+      Number(match.tournament_id) === Number(tournament.id) &&
+      match.stage === "semifinal"
+  )
+  .sort((a, b) => {
+    if (Number(a.series_number) !== Number(b.series_number)) {
+      return Number(a.series_number) - Number(b.series_number);
+    }
+    return Number(a.game_number) - Number(b.game_number);
+  });
+
+const semifinalHeading = document.createElement("h3");
+semifinalHeading.textContent = "DYCHESS CUP SEMIFINALS";
+area.appendChild(semifinalHeading);
+
+if (semifinalMatches.length === 0) {
+  const message = document.createElement("p");
+  message.textContent = "Semifinal pairings will appear here.";
+  area.appendChild(message);
+} else {
+  for (let series = 1; series <= 2; series++) {
+    const seriesMatches = semifinalMatches.filter(
+      (match) => Number(match.series_number) === series
+    );
+
+    if (seriesMatches.length === 0) continue;
+
+    const seriesBox = document.createElement("div");
+    seriesBox.className = "cup-pairing-box";
+
+    const seriesTitle = document.createElement("h4");
+    seriesTitle.textContent = `Semifinal ${series}`;
+    seriesBox.appendChild(seriesTitle);
+
+    seriesMatches.forEach((match) => {
+      const gameRow = document.createElement("p");
+      gameRow.className = "cup-fixture-game";
+
+      const white = playerName(match.player1_id);
+      const black = playerName(match.player2_id);
+
+      let resultText = "Pending";
+
+      if (match.status === "completed") {
+        resultText = "Completed";
+      }
+
+      gameRow.innerHTML = `
+        <strong>Game ${match.game_number}</strong><br>
+        <span class="cup-white-dot">●</span> ${white}
+        <span class="cup-vs">vs</span>
+        <span class="cup-black-dot">●</span> ${black}
+        <span class="cup-game-result">${resultText}</span>
+      `;
+
+      seriesBox.appendChild(gameRow);
+    });
+
+    area.appendChild(seriesBox);
+  }
+}
           // DYCHESS CUP league leaderboard.
           const leaderboardHeading = document.createElement("h3");
           leaderboardHeading.textContent = "LEAGUE STANDINGS";
