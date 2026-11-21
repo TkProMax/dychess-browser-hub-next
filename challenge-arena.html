@@ -1295,11 +1295,17 @@ if (semifinalMatches.length === 0) {
       const white = playerName(match.player1_id);
       const black = playerName(match.player2_id);
 
-      let resultText = "Pending";
+     let resultText = "Pending";
 
-      if (match.status === "completed") {
-        resultText = "Completed";
-      }
+if (match.status === "completed") {
+  if (match.result === "player1_win") {
+    resultText = "White won";
+  } else if (match.result === "player2_win") {
+    resultText = "Black won";
+  } else if (match.result === "draw") {
+    resultText = "Draw";
+  }
+}
 
       gameRow.innerHTML = `
         <strong>Game ${match.game_number}</strong><br>
