@@ -1023,6 +1023,66 @@ recordCupLeagueResultButton.addEventListener("click", async () => {
     recordCupLeagueResultButton.disabled = false;
   }
 });
+
+    const startCupSemifinalsButton = document.getElementById(
+  "startCupSemifinalsButton"
+);
+
+startCupSemifinalsButton.addEventListener("click", async () => {
+  if (!window.confirm(
+    "Generate DYCHESS CUP semifinal pairings from the final league standings?"
+  )) {
+    return;
+  }
+
+  startCupSemifinalsButton.disabled = true;
+  cupAdminMessage.textContent = "Generating semifinal pairings...";
+
+  try {
+    const { data, error } = await adminDb.auth.getSession();
+    if (error) throw error;
+
+    const session = data.session;
+    if (!session) {
+      throw new Error("Please sign in through Admin.html first.");
+    }
+
+    const response = await fetch(
+      SUPABASE_URL + "/functions/v1/arena-cup",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "apikey": SUPABASE_PUBLISHABLE_KEY,
+          "Authorization": "Bearer " + session.access_token
+        },
+        body: JSON.stringify({
+          action: "admin_start_semifinals",
+          tournamentId: 7
+        })
+      }
+    );
+
+    const result = await response.json().catch(() => ({}));
+
+    if (!response.ok || !result.success) {
+      throw new Error(
+        result.error || "Could not generate semifinal pairings."
+      );
+    }
+
+    cupAdminMessage.textContent =
+      result.message || "Semifinal pairings generated.";
+
+    await loadCupTournament();
+
+  } catch (error) {
+    cupAdminMessage.textContent =
+      error.message || "Could not generate semifinal pairings.";
+  } finally {
+    startCupSemifinalsButton.disabled = false;
+  }
+});
     checkCupAdmin();
    async function loadCupTournament() {
       const area = document.getElementById("cupTournamentArea");
