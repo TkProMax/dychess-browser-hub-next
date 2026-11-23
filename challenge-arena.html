@@ -1325,6 +1325,64 @@ if (cupPayment === "cancelled") {
                 a.match_number - b.match_number
             );
 
+// DYCHESS CUP FINAL.
+const finalMatches = matches
+  .filter(
+    (match) =>
+      Number(match.tournament_id) === Number(tournament.id) &&
+      match.stage === "final"
+  )
+  .sort((a, b) => Number(a.game_number) - Number(b.game_number));
+
+const finalHeading = document.createElement("h3");
+finalHeading.textContent = "DYCHESS CUP FINAL";
+area.appendChild(finalHeading);
+
+if (finalMatches.length === 0) {
+  const message = document.createElement("p");
+  message.textContent = "Final fixtures will appear here.";
+  area.appendChild(message);
+} else {
+  const finalBox = document.createElement("div");
+  finalBox.className = "cup-pairing-box";
+
+  const finalTitle = document.createElement("h4");
+  finalTitle.textContent = "Championship Match";
+  finalBox.appendChild(finalTitle);
+
+  finalMatches.forEach((match) => {
+    const gameRow = document.createElement("p");
+    gameRow.className = "cup-fixture-game";
+
+    const white = playerName(match.player1_id);
+    const black = playerName(match.player2_id);
+
+    let resultText = "Pending";
+
+    if (match.status === "completed") {
+      if (match.result === "player1_win") {
+        resultText = "White won";
+      } else if (match.result === "player2_win") {
+        resultText = "Black won";
+      } else if (match.result === "draw") {
+        resultText = "Draw";
+      }
+    }
+
+    gameRow.innerHTML = `
+      <strong>Game ${match.game_number}</strong><br>
+      <span class="cup-white-dot">●</span> ${white}
+      <span class="cup-vs">vs</span>
+      <span class="cup-black-dot">●</span> ${black}
+      <span class="cup-game-result">${resultText}</span>
+    `;
+
+    finalBox.appendChild(gameRow);
+  });
+
+  area.appendChild(finalBox);
+}
+
           // DYCHESS CUP semifinals.
 const semifinalMatches = matches
   .filter(
