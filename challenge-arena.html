@@ -1100,6 +1100,63 @@ startCupSemifinalsButton.addEventListener("click", async () => {
     startCupSemifinalsButton.disabled = false;
   }
 });
+
+    generateCupFinalButton.addEventListener("click", async () => {
+  if (!window.confirm(
+    "Verify the two semifinal winners and activate the six existing final fixtures?"
+  )) {
+    return;
+  }
+
+  generateCupFinalButton.disabled = true;
+  cupAdminMessage.textContent = "Verifying DYCHESS CUP finalists...";
+
+  try {
+    const { data, error } = await adminDb.auth.getSession();
+    if (error) throw error;
+
+    const session = data.session;
+
+    if (!session) {
+      throw new Error("Please sign in through Admin.html first.");
+    }
+
+    const response = await fetch(
+      SUPABASE_URL + "/functions/v1/arena-cup",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "apikey": SUPABASE_PUBLISHABLE_KEY,
+          "Authorization": "Bearer " + session.access_token
+        },
+        body: JSON.stringify({
+          action: "admin_generate_final",
+          tournamentId: 7
+        })
+      }
+    );
+
+    const result = await response.json().catch(() => ({}));
+
+    if (!response.ok || !result.success) {
+      throw new Error(
+        result.error || "Could not verify the final fixtures."
+      );
+    }
+
+    cupAdminMessage.textContent =
+      result.message || "DYCHESS CUP final fixtures are ready.";
+
+    await loadCupTournament();
+
+  } catch (error) {
+    cupAdminMessage.textContent =
+      error.message || "Could not verify the final fixtures.";
+  } finally {
+    generateCupFinalButton.disabled = false;
+  }
+});
     checkCupAdmin();
    async function loadCupTournament() {
       const area = document.getElementById("cupTournamentArea");
