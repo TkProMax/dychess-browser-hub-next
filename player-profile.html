@@ -313,13 +313,19 @@ async function loadPlayerTrophies(playerId, username) {
   const trophies = [];
 
   // Season 0 Champion trophy for Winnie54321
-  if ((username || '').toLowerCase() === 'winnie54321') {
-    trophies.push({
-      icon: '🏆',
-      title: 'Season 0 Champion',
-      detail: ''
-    });
-  }
+ if ((username || '').toLowerCase() === 'winnie54321') {
+  trophies.push({
+    icon: '🏆',
+    title: 'Season 0 Champion',
+    detail: ''
+  });
+
+  trophies.push({
+    icon: '🏆',
+    title: 'DYCHESS CUP Champion',
+    detail: '2026 DYCHESS CUP'
+  });
+}
 
   if ((username || '').toLowerCase() === 'sirayula') {
   trophies.push({
