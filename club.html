@@ -1,0 +1,391 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Club | DYCHESS</title>
+  <style>
+    :root {
+      --bg: #07140e;
+      --panel: #10251a;
+      --gold: #d9b45b;
+      --green: #7fae3d;
+      --text: #f2f4ed;
+      --muted: #aab7aa;
+      --border: rgba(217,180,91,.22);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      padding: 24px 16px 50px;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Arial, sans-serif;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 950px;
+      margin: auto;
+    }
+
+    a { color: var(--gold); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    .top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 25px;
+    }
+
+    .brand {
+      color: var(--gold);
+      font-weight: 800;
+      letter-spacing: 2px;
+      font-size: 20px;
+    }
+
+    .back {
+      border: 1px solid var(--border);
+      padding: 10px 15px;
+      border-radius: 8px;
+    }
+
+    .hero, .section {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 24px;
+      margin-bottom: 20px;
+    }
+
+    .hero { text-align: center; }
+
+    .logo {
+      width: 90px;
+      height: 90px;
+      object-fit: cover;
+      border-radius: 50%;
+      border: 2px solid var(--gold);
+      margin-bottom: 12px;
+    }
+
+    h1 {
+      color: var(--gold);
+      margin: 8px 0;
+      font-size: 30px;
+    }
+
+    h2 {
+      color: var(--gold);
+      font-size: 19px;
+      margin-top: 0;
+    }
+
+    .muted { color: var(--muted); line-height: 1.6; }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-top: 22px;
+    }
+
+    .stat {
+      background: rgba(0,0,0,.2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 15px 8px;
+    }
+
+    .stat strong {
+      display: block;
+      color: var(--gold);
+      font-size: 24px;
+      margin-bottom: 5px;
+    }
+
+    .item {
+      padding: 14px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .item:last-child { border-bottom: 0; }
+
+    .item strong {
+      display: block;
+      margin-bottom: 5px;
+    }
+
+    .empty {
+      color: var(--muted);
+      padding: 12px 0;
+    }
+
+    .error {
+      text-align: center;
+      color: #ffb0a8;
+      padding: 35px 15px;
+    }
+
+    .loading {
+      text-align: center;
+      color: var(--gold);
+      padding: 45px 10px;
+    }
+
+    @media (max-width: 550px) {
+      .stats { grid-template-columns: 1fr; }
+      .hero, .section { padding: 18px; }
+      h1 { font-size: 25px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="container">
+    <div class="top">
+      <div class="brand">DYCHESS</div>
+      <a class="back" href="clubs.html">← All Clubs</a>
+    </div>
+
+    <div id="content" class="loading">Loading club...</div>
+  </main>
+
+  <script>
+    const SUPABASE_URL = "https://rpfowuqlhboslhmvjelc.supabase.co";
+    const SUPABASE_KEY = "sb_publishable_K5Fzinv7_Ac0gpaQc2C6Lg_3KstrDKY";
+
+    const headers = {
+      "apikey": SUPABASE_KEY,
+      "Authorization": "Bearer " + SUPABASE_KEY
+    };
+
+    const content = document.getElementById("content");
+
+    function escapeHTML(value) {
+      return String(value ?? "").replace(/[&<>"']/g, character => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#039;"
+      })[character]);
+    }
+
+    async function getRows(table, query) {
+      const response = await fetch(
+        `${SUPABASE_URL}/rest/v1/${table}?${query}`,
+        { headers }
+      );
+
+      if (!response.ok) {
+        throw new Error(`Could not load ${table}.`);
+      }
+
+      return response.json();
+    }
+
+    async function loadClub() {
+      const slug = new URLSearchParams(window.location.search).get("slug");
+
+      if (!slug) {
+        content.innerHTML = `
+          <div class="error">
+            <h2>No club was specified.</h2>
+            <p>Please return to the Clubs directory and select a club.</p>
+            <a href="clubs.html">Go to Clubs</a>
+          </div>`;
+        return;
+      }
+
+      try {
+        const clubs = await getRows(
+          "clubs",
+          `select=id,name,slug,description,logo_url,country,city,status&slug=eq.${encodeURIComponent(slug)}&status=eq.active&limit=1`
+        );
+
+        if (!clubs.length) {
+          content.innerHTML = `
+            <div class="error">
+              <h2>Club not found</h2>
+              <p>This club may not exist or may not currently be active.</p>
+              <a href="clubs.html">Return to Clubs</a>
+            </div>`;
+          return;
+        }
+
+        const club = clubs[0];
+
+        content.innerHTML = `
+          <section class="hero">
+            ${club.logo_url
+              ? `<img class="logo" src="${escapeHTML(club.logo_url)}" alt="Club logo">`
+              : ""}
+            <h1>${escapeHTML(club.name)}</h1>
+            <p class="muted">
+              ${[club.city, club.country].filter(Boolean).map(escapeHTML).join(", ") || "Chess Club"}
+            </p>
+            <p class="muted">${escapeHTML(club.description || "Welcome to this chess club.")}</p>
+
+            <div class="stats">
+              <div class="stat">
+                <strong id="memberCount">—</strong>
+                Members
+              </div>
+              <div class="stat">
+                <strong id="teamCount">—</strong>
+                Teams
+              </div>
+              <div class="stat">
+                <strong id="tournamentCount">—</strong>
+                Tournaments
+              </div>
+            </div>
+          </section>
+
+          <section class="section">
+            <h2>Club Members</h2>
+            <div id="members"><p class="empty">Loading members...</p></div>
+          </section>
+
+          <section class="section">
+            <h2>Club Teams</h2>
+            <div id="teams"><p class="empty">Loading teams...</p></div>
+          </section>
+
+          <section class="section">
+            <h2>Club Tournaments</h2>
+            <div id="tournaments"><p class="empty">Loading tournaments...</p></div>
+          </section>
+        `;
+
+        await Promise.all([
+          loadMembers(club.id),
+          loadTeams(club.id),
+          loadTournaments(club.id)
+        ]);
+
+      } catch (error) {
+        console.error(error);
+        content.innerHTML = `
+          <div class="error">
+            <h2>Unable to load this club</h2>
+            <p>${escapeHTML(error.message)}</p>
+            <a href="clubs.html">Return to Clubs</a>
+          </div>`;
+      }
+    }
+
+    async function loadMembers(clubId) {
+      const target = document.getElementById("members");
+
+      try {
+        const memberships = await getRows(
+          "club_members",
+          `select=player_id,joined_at&club_id=eq.${clubId}&order=joined_at.asc`
+        );
+
+        document.getElementById("memberCount").textContent = memberships.length;
+
+        if (!memberships.length) {
+          target.innerHTML = '<p class="empty">No members have joined this club yet.</p>';
+          return;
+        }
+
+        const ids = [...new Set(memberships.map(m => m.player_id))];
+        const players = await getRows(
+          "players",
+          `select=id,display_name,lichess_username&id=in.(${ids.join(",")})`
+        );
+
+        const playerMap = new Map(players.map(p => [String(p.id), p]));
+
+        target.innerHTML = memberships.map(member => {
+          const player = playerMap.get(String(member.player_id));
+          const name = player
+            ? (player.display_name || player.lichess_username)
+            : `Player ${member.player_id}`;
+
+          return `
+            <div class="item">
+              <strong>${escapeHTML(name)}</strong>
+              <span class="muted">Club member</span>
+            </div>`;
+        }).join("");
+
+      } catch (error) {
+        console.error(error);
+        document.getElementById("memberCount").textContent = "—";
+        target.innerHTML = '<p class="empty">Member information is currently unavailable.</p>';
+      }
+    }
+
+    async function loadTeams(clubId) {
+      const target = document.getElementById("teams");
+
+      try {
+        const teams = await getRows(
+          "club_teams",
+          `select=id,name,description,status&club_id=eq.${clubId}&status=eq.active&order=created_at.desc`
+        );
+
+        document.getElementById("teamCount").textContent = teams.length;
+
+        target.innerHTML = teams.length
+          ? teams.map(team => `
+              <div class="item">
+                <strong>${escapeHTML(team.name)}</strong>
+                <span class="muted">${escapeHTML(team.description || "Club team")}</span>
+              </div>`).join("")
+          : '<p class="empty">This club has not created any teams yet.</p>';
+
+      } catch (error) {
+        console.error(error);
+        document.getElementById("teamCount").textContent = "—";
+        target.innerHTML = '<p class="empty">Team information is currently unavailable.</p>';
+      }
+    }
+
+    async function loadTournaments(clubId) {
+      const target = document.getElementById("tournaments");
+
+      try {
+        const tournaments = await getRows(
+          "tournaments",
+          `select=id,name,tournament_date,time_control&club_id=eq.${clubId}&order=tournament_date.desc`
+        );
+
+        document.getElementById("tournamentCount").textContent = tournaments.length;
+
+        target.innerHTML = tournaments.length
+          ? tournaments.map(tournament => `
+              <div class="item">
+                <strong>${escapeHTML(tournament.name || "Club Tournament")}</strong>
+                <span class="muted">
+                  ${tournament.tournament_date
+                    ? escapeHTML(new Date(tournament.tournament_date).toLocaleDateString())
+                    : "Date not announced"}
+                  ${tournament.time_control
+                    ? " · " + escapeHTML(tournament.time_control)
+                    : ""}
+                </span>
+              </div>`).join("")
+          : '<p class="empty">No club tournaments have been listed yet.</p>';
+
+      } catch (error) {
+        console.error(error);
+        document.getElementById("tournamentCount").textContent = "—";
+        target.innerHTML = '<p class="empty">Tournament information is currently unavailable.</p>';
+      }
+    }
+
+    loadClub();
+  </script>
+</body>
+</html>
