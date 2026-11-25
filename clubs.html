@@ -5,7 +5,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#07140e">
-  <title>Club Profile | DYCHESS</title>
+  <title>Clubs Directory | DYCHESS</title>
+
   <style>
     :root {
       --bg: #07140e;
@@ -16,116 +17,210 @@
       --muted: #b7c1b8;
       --border: rgba(217,180,91,.3);
     }
+
     * { box-sizing: border-box; }
+
     body {
       margin: 0;
       background: radial-gradient(ellipse at top, #1a3422, transparent 55%), var(--bg);
       color: var(--text);
       font-family: Arial, sans-serif;
     }
+
     header {
       padding: 20px 7%;
       display: flex;
       justify-content: space-between;
       align-items: center;
       border-bottom: 1px solid var(--border);
+      gap: 15px;
     }
+
     .brand {
       color: var(--gold);
-      font-size: 22px;
+      font-size: 23px;
       font-weight: 900;
       letter-spacing: 2px;
       text-decoration: none;
     }
-    header a:last-child { color: var(--muted); text-decoration: none; }
-    main { max-width: 1050px; margin: auto; padding: 35px 20px 65px; }
+
+    nav {
+      display: flex;
+      gap: 18px;
+      flex-wrap: wrap;
+    }
+
+    nav a {
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 14px;
+    }
+
+    nav a:hover { color: var(--gold); }
+
+    main {
+      max-width: 1150px;
+      margin: auto;
+      padding: 40px 20px 70px;
+    }
+
     .hero {
       text-align: center;
-      padding: 35px 15px;
+      padding: 45px 20px;
       background: linear-gradient(145deg, #10251a, #0a170f);
       border: 1px solid var(--border);
       border-radius: 18px;
+      margin-bottom: 35px;
     }
-    .logo {
-      width: 105px;
-      height: 105px;
-      object-fit: contain;
-      border-radius: 50%;
-      border: 2px solid var(--gold);
-      background: #07140e;
-      margin-bottom: 15px;
-    }
-    .knight { font-size: 58px; color: var(--gold); }
+
     .eyebrow {
       color: var(--gold);
-      letter-spacing: 3px;
       font-size: 12px;
       font-weight: bold;
+      letter-spacing: 3px;
     }
-    h1 { font-size: clamp(30px, 6vw, 48px); margin: 12px 0; }
-    .description {
-      max-width: 700px;
-      margin: 12px auto;
+
+    h1 {
+      font-size: clamp(32px, 6vw, 49px);
+      margin: 13px 0;
+    }
+
+    .hero p {
       color: var(--muted);
-      line-height: 1.8;
-      white-space: pre-wrap;
+      line-height: 1.7;
+      max-width: 650px;
+      margin: auto;
     }
-    .location { color: var(--muted); font-size: 14px; }
-    .stats {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 14px;
-      margin: 20px 0 30px;
+
+    .actions {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 25px;
     }
-    .stat, .panel {
-      background: var(--panel);
-      border: 1px solid var(--border);
-      border-radius: 13px;
-      padding: 20px;
-    }
-    .stat { text-align: center; }
-    .stat strong {
-      display: block;
-      color: var(--gold);
-      font-size: 29px;
-      margin-bottom: 5px;
-    }
-    .stat span { color: var(--muted); font-size: 13px; }
-    .panel { margin-top: 20px; }
-    h2 { color: var(--gold); margin-top: 0; font-size: 22px; }
-    .item {
-      padding: 15px 0;
-      border-top: 1px solid var(--border);
-    }
-    .item:first-of-type { border-top: 0; }
-    .item h3 { margin: 0 0 7px; font-size: 17px; }
-    .item p { color: var(--muted); line-height: 1.6; margin: 5px 0; }
-    .empty { color: var(--muted); padding: 15px 0; line-height: 1.6; }
-    .status {
-      color: #b9e28b;
-      font-size: 12px;
-      text-transform: capitalize;
-    }
-    .message {
-      padding: 18px;
-      text-align: center;
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      color: var(--muted);
-      margin: 20px 0;
-      line-height: 1.6;
-    }
-    .error { color: #ffd0d0; border-color: #854747; }
+
     .button {
       display: inline-block;
-      padding: 12px 18px;
-      margin-top: 15px;
+      padding: 12px 19px;
       border-radius: 8px;
       background: var(--green);
       color: #07140e;
       text-decoration: none;
       font-weight: bold;
+      font-size: 14px;
     }
+
+    .button.secondary {
+      background: transparent;
+      border: 1px solid var(--gold);
+      color: var(--gold);
+    }
+
+    .directory-heading {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 15px;
+      margin-bottom: 18px;
+    }
+
+    h2 {
+      color: var(--gold);
+      font-size: 23px;
+      margin: 0;
+    }
+
+    #clubCount {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .clubs-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 18px;
+    }
+
+    .club-card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 23px;
+      display: flex;
+      flex-direction: column;
+      min-height: 275px;
+    }
+
+    .club-top {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 15px;
+    }
+
+    .club-logo {
+      width: 65px;
+      height: 65px;
+      border-radius: 50%;
+      border: 1px solid var(--gold);
+      object-fit: contain;
+      background: #07140e;
+      flex-shrink: 0;
+    }
+
+    .club-placeholder {
+      width: 65px;
+      height: 65px;
+      display: grid;
+      place-items: center;
+      border: 1px solid var(--gold);
+      border-radius: 50%;
+      color: var(--gold);
+      font-size: 34px;
+      flex-shrink: 0;
+    }
+
+    .club-card h3 {
+      margin: 0;
+      font-size: 19px;
+      line-height: 1.4;
+    }
+
+    .club-location {
+      color: var(--muted);
+      font-size: 12px;
+      margin-top: 5px;
+    }
+
+    .club-description {
+      color: var(--muted);
+      line-height: 1.65;
+      font-size: 14px;
+      margin: 5px 0 20px;
+      flex: 1;
+    }
+
+    .club-card .button {
+      text-align: center;
+      margin-top: auto;
+    }
+
+    .message {
+      padding: 25px;
+      text-align: center;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      color: var(--muted);
+      line-height: 1.7;
+      background: var(--panel);
+    }
+
+    .error {
+      color: #ffd0d0;
+      border-color: #854747;
+    }
+
     footer {
       padding: 25px;
       border-top: 1px solid var(--border);
@@ -133,266 +228,168 @@
       color: var(--muted);
       font-size: 13px;
     }
+
     @media(max-width: 600px) {
-      .stats { grid-template-columns: 1fr; }
-      header { padding: 17px 20px; }
+      header {
+        padding: 17px 20px;
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      main { padding-top: 25px; }
+      .directory-heading { align-items: flex-start; flex-direction: column; }
     }
   </style>
 </head>
+
 <body>
 
 <header>
   <a class="brand" href="index.html">DYCHESS</a>
-  <a href="clubs.html">← All Clubs</a>
+
+  <nav>
+    <a href="index.html">Home</a>
+    <a href="club-organizer.html">Organizer Dashboard</a>
+  </nav>
 </header>
 
 <main>
-  <div id="pageMessage" class="message">Loading club profile...</div>
+  <section class="hero">
+    <div class="eyebrow">THE DYCHESS CLUB NETWORK</div>
+    <h1>Discover Chess Clubs</h1>
+    <p>
+      Find your chess community, connect with other players,
+      join teams and participate in club tournaments.
+    </p>
 
-  <div id="clubContent" hidden>
-    <section class="hero">
-      <div id="clubLogoContainer">
-        <div class="knight">♞</div>
-      </div>
-      <div class="eyebrow">DYCHESS CLUB NETWORK</div>
-      <h1 id="clubName"></h1>
-      <p class="description" id="clubDescription"></p>
-      <p class="location" id="clubLocation"></p>
-      <a class="button" href="clubs.html">Explore Other Clubs</a>
-    </section>
+    <div class="actions">
+      <a class="button" href="player-login.html">Join a Club</a>
+      <a class="button secondary" href="club-organizer.html">Register as Organizer</a>
+    </div>
+  </section>
 
-    <section class="stats">
-      <div class="stat">
-        <strong id="memberCount">0</strong>
-        <span>Club Members</span>
-      </div>
-      <div class="stat">
-        <strong id="teamCount">0</strong>
-        <span>Active Teams</span>
-      </div>
-      <div class="stat">
-        <strong id="tournamentCount">0</strong>
-        <span>Club Tournaments</span>
-      </div>
-    </section>
+  <section>
+    <div class="directory-heading">
+      <h2>Explore Clubs</h2>
+      <span id="clubCount">Loading clubs...</span>
+    </div>
 
-    <section class="panel">
-      <h2>About This Club</h2>
-      <p id="aboutText" class="description" style="text-align:left"></p>
-      <p class="location" id="clubStatus"></p>
-    </section>
-
-    <section class="panel">
-      <h2>Club Members</h2>
-      <div id="membersList" class="empty">Loading members...</div>
-    </section>
-
-    <section class="panel">
-      <h2>Club Teams</h2>
-      <div id="teamsList" class="empty">Loading teams...</div>
-    </section>
-
-    <section class="panel">
-      <h2>Club Tournaments</h2>
-      <div id="tournamentsList" class="empty">Loading tournaments...</div>
-    </section>
-  </div>
+    <div id="clubsList" class="message">
+      Loading the DYCHESS club directory...
+    </div>
+  </section>
 </main>
 
-<footer>© DYCHESS. Building a stronger chess community.</footer>
+<footer>
+  © DYCHESS. Building a stronger chess community.
+</footer>
 
 <script>
 const SUPABASE_URL = "https://rpfowuqlhboslhmvjelc.supabase.co";
 const SUPABASE_KEY = "sb_publishable_K5Fzinv7_Ac0gpaQc2C6Lg_3KstrDKY";
 
-const message = document.getElementById("pageMessage");
-const content = document.getElementById("clubContent");
+const clubsList = document.getElementById("clubsList");
+const clubCount = document.getElementById("clubCount");
 
-function showError(text) {
-  message.textContent = text;
-  message.className = "message error";
-  message.hidden = false;
-  content.hidden = true;
-}
-
-function showMessage(text) {
-  message.textContent = text;
-  message.className = "message";
-  message.hidden = false;
-}
-
-function setText(id, value) {
-  document.getElementById(id).textContent = value || "";
-}
-
-async function databaseGet(path) {
-  const response = await fetch(SUPABASE_URL + "/rest/v1/" + path, {
-    headers: {
-      "apikey": SUPABASE_KEY
-    }
-  });
-
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({}));
-    throw new Error(error.message || "Unable to load club information.");
-  }
-
-  return response.json();
-}
-
-function renderEmpty(id, text) {
-  const element = document.getElementById(id);
-  element.textContent = text;
-  element.className = "empty";
-}
-
-function renderItems(id, items, type) {
-  const container = document.getElementById(id);
-  container.replaceChildren();
-
-  if (!items || !items.length) {
-    renderEmpty(id, type === "members"
-      ? "No members have joined this club yet."
-      : type === "teams"
-        ? "This club has not created any active teams yet."
-        : "No club tournaments have been published yet."
-    );
-    return;
-  }
-
-  items.forEach(item => {
-    const article = document.createElement("article");
-    article.className = "item";
-
-    const heading = document.createElement("h3");
-    const paragraph = document.createElement("p");
-
-    if (type === "members") {
-      heading.textContent = item.display_name || item.lichess_username ||
-        ("Club Member #" + item.player_id);
-      paragraph.textContent = item.joined_at
-        ? "Joined " + new Date(item.joined_at).toLocaleDateString()
-        : "Club member";
-    } else if (type === "teams") {
-      heading.textContent = item.name || "Club Team";
-      paragraph.textContent = item.description || "No team description.";
-    } else {
-      heading.textContent = item.name || item.title || "Club Tournament";
-      const details = [];
-      if (item.tournament_date) details.push(item.tournament_date);
-      if (item.time_control) details.push(item.time_control);
-      paragraph.textContent = details.join(" · ") || "Club tournament";
-    }
-
-    article.append(heading, paragraph);
-    container.appendChild(article);
-  });
-}
-
-async function loadClub() {
-  const params = new URLSearchParams(window.location.search);
-  const slug = params.get("slug");
-
-  if (!slug) {
-    showError("No club was specified. Please return to the Clubs directory and select a club.");
-    return;
-  }
-
+async function loadClubs() {
   try {
-    const clubs = await databaseGet(
-      "clubs?select=id,name,slug,description,logo_url,country,city,status" +
-      "&slug=eq." + encodeURIComponent(slug) +
-      "&status=eq.active&limit=1"
+    const response = await fetch(
+      SUPABASE_URL +
+      "/rest/v1/clubs?select=id,name,slug,description,logo_url,country,city,status" +
+      "&status=eq.active&order=created_at.desc",
+      {
+        headers: {
+          "apikey": SUPABASE_KEY,
+          "Authorization": "Bearer " + SUPABASE_KEY
+        }
+      }
     );
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.message || "Unable to retrieve clubs.");
+    }
+
+    const clubs = await response.json();
+
+    clubCount.textContent =
+      clubs.length + (clubs.length === 1 ? " club" : " clubs");
+
+    clubsList.replaceChildren();
+    clubsList.className = "clubs-grid";
 
     if (!clubs.length) {
-      showError("This club could not be found, or it is currently unavailable.");
+      clubsList.className = "message";
+      clubsList.textContent =
+        "No active clubs have been registered yet. Be the first to create a DYCHESS club!";
       return;
     }
 
-    const club = clubs[0];
+    clubs.forEach(club => {
+      const card = document.createElement("article");
+      card.className = "club-card";
 
-    setText("clubName", club.name);
-    setText("clubDescription", club.description || "Welcome to this DYCHESS club.");
-    setText("aboutText", club.description || "This club has not added an introduction yet.");
-    setText("clubLocation",
-      [club.city, club.country].filter(Boolean).join(", ") || "Location not provided"
-    );
-    setText("clubStatus", "Club status: " + club.status);
+      const top = document.createElement("div");
+      top.className = "club-top";
 
-    document.title = club.name + " | DYCHESS";
+      if (club.logo_url) {
+        const logo = document.createElement("img");
+        logo.className = "club-logo";
+        logo.src = club.logo_url;
+        logo.alt = club.name + " logo";
+        logo.onerror = () => {
+          const placeholder = document.createElement("div");
+          placeholder.className = "club-placeholder";
+          placeholder.textContent = "♞";
+          logo.replaceWith(placeholder);
+        };
+        top.appendChild(logo);
+      } else {
+        const placeholder = document.createElement("div");
+        placeholder.className = "club-placeholder";
+        placeholder.textContent = "♞";
+        top.appendChild(placeholder);
+      }
 
-    if (club.logo_url) {
-      const image = document.createElement("img");
-      image.src = club.logo_url;
-      image.alt = club.name + " logo";
-      image.className = "logo";
-      image.onerror = () => image.remove();
+      const titleBox = document.createElement("div");
 
-      const logoContainer = document.getElementById("clubLogoContainer");
-      logoContainer.replaceChildren(image);
-    }
+      const title = document.createElement("h3");
+      title.textContent = club.name;
 
-    content.hidden = false;
-    message.hidden = true;
+      const location = document.createElement("div");
+      location.className = "club-location";
+      location.textContent =
+        [club.city, club.country].filter(Boolean).join(", ") ||
+        "Location not provided";
 
-    const clubId = club.id;
+      titleBox.append(title, location);
+      top.appendChild(titleBox);
 
-    const [membersResult, teamsResult, tournamentsResult] =
-      await Promise.allSettled([
-        databaseGet(
-          "club_members?select=player_id,joined_at" +
-          "&club_id=eq." + encodeURIComponent(clubId) +
-          "&order=joined_at.asc"
-        ),
-        databaseGet(
-          "club_teams?select=id,name,description,status" +
-          "&club_id=eq." + encodeURIComponent(clubId) +
-          "&status=eq.active&order=created_at.desc"
-        ),
-        databaseGet(
-          "tournaments?select=*&club_id=eq." +
-          encodeURIComponent(clubId)
-        )
-      ]);
+      const description = document.createElement("p");
+      description.className = "club-description";
+      description.textContent =
+        club.description || "Welcome to this DYCHESS chess club.";
 
-    if (membersResult.status === "fulfilled") {
-      const members = membersResult.value;
-      setText("memberCount", members.length);
-      renderItems("membersList", members, "members");
-    } else {
-      setText("memberCount", "—");
-      renderEmpty("membersList", "Member information is temporarily unavailable.");
-      console.error("Members:", membersResult.reason);
-    }
+      const link = document.createElement("a");
+      link.className = "button";
+      link.href = "club.html?slug=" + encodeURIComponent(club.slug);
+      link.textContent = "View Club";
 
-    if (teamsResult.status === "fulfilled") {
-      const teams = teamsResult.value;
-      setText("teamCount", teams.length);
-      renderItems("teamsList", teams, "teams");
-    } else {
-      setText("teamCount", "—");
-      renderEmpty("teamsList", "Team information is temporarily unavailable.");
-      console.error("Teams:", teamsResult.reason);
-    }
-
-    if (tournamentsResult.status === "fulfilled") {
-      const tournaments = tournamentsResult.value;
-      setText("tournamentCount", tournaments.length);
-      renderItems("tournamentsList", tournaments, "tournaments");
-    } else {
-      setText("tournamentCount", "—");
-      renderEmpty("tournamentsList", "Tournament information is temporarily unavailable.");
-      console.error("Tournaments:", tournamentsResult.reason);
-    }
+      card.append(top, description, link);
+      clubsList.appendChild(card);
+    });
 
   } catch (error) {
-    console.error(error);
-    showError(error.message || "Something went wrong while loading this club.");
+    console.error("Club directory:", error);
+    clubsList.className = "message error";
+    clubsList.textContent =
+      "Unable to load clubs right now. Please refresh the page and try again.";
+    clubCount.textContent = "Directory unavailable";
   }
 }
 
-loadClub();
+loadClubs();
 </script>
+
 </body>
 </html>
