@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -16,9 +17,7 @@
       --muted: #b7c1b8;
     }
 
-    * {
-      box-sizing: border-box;
-    }
+    * { box-sizing: border-box; }
 
     body {
       margin: 0;
@@ -73,6 +72,7 @@
       display: block;
       width: 100%;
       padding: 15px 18px;
+      margin-top: 10px;
       border: 0;
       border-radius: 10px;
       background: var(--green);
@@ -140,14 +140,15 @@
     >
       Continue with Lichess
     </button>
+
     <button
-  class="lichess-button"
-  id="lichessLogout"
-  type="button"
-  hidden
->
-  Sign out
-</button>
+      class="lichess-button"
+      id="lichessLogout"
+      type="button"
+      hidden
+    >
+      Sign out
+    </button>
 
     <div id="status" role="status" aria-live="polite"></div>
 
@@ -161,26 +162,80 @@
     </p>
   </main>
 
-  <script>
+<script>
   const loginButton = document.getElementById("lichessLogin");
   const logoutButton = document.getElementById("lichessLogout");
   const statusBox = document.getElementById("status");
 
-  const SUPABASE_URL = "https://rpfowuqlhboslhmvjelc.supabase.co";
-  const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_K5Fzinv7_Ac0gpaQc2C6Lg_3KstrDKY";
+  const SUPABASE_URL =
+    "https://rpfowuqlhboslhmvjelc.supabase.co";
+
+  const SUPABASE_PUBLISHABLE_KEY =
+    "sb_publishable_K5Fzinv7_Ac0gpaQc2C6Lg_3KstrDKY";
 
   const STORAGE_TOKEN = "dychess_player_session";
   const STORAGE_EXPIRY = "dychess_player_session_expiry";
   const STORAGE_USER = "dychess_player_username";
 
-  const params = new URLSearchParams(window.location.search);
-const nextPage = params.get("next") || "challenge-arena.html";
+  const NEXT_STORAGE = "dychess_login_next";
 
-const redirectUri =
+  const redirectUri =
     window.location.origin + window.location.pathname;
+
+  // Only allow destinations on this DYCHESS website.
+  function safeNextPage(value) {
+    if (!value || typeof value !== "string") {
+      return "challenge-arena.html";
+    }
+
+    if (
+      value.startsWith("//") ||
+      value.includes("\\") ||
+      value.includes("://")
+    ) {
+      return "challenge-arena.html";
+    }
+
+    try {
+      const destination = new URL(value, window.location.origin);
+
+      if (destination.origin !== window.location.origin) {
+        return "challenge-arena.html";
+      }
+
+      return destination.pathname.replace(/^\//, "") +
+        destination.search +
+        destination.hash;
+    } catch (error) {
+      return "challenge-arena.html";
+    }
+  }
+
+  // Save the requested destination before leaving for Lichess.
+  const pageParams = new URLSearchParams(window.location.search);
+  const requestedNext = pageParams.get("next");
+
+  if (requestedNext) {
+    sessionStorage.setItem(
+      NEXT_STORAGE,
+      safeNextPage(requestedNext)
+    );
+  }
+
+  function getNextPage() {
+    return safeNextPage(
+      sessionStorage.getItem(NEXT_STORAGE)
+    );
+  }
+
   function showError(message) {
     statusBox.textContent = message;
     loginButton.disabled = false;
+  }
+
+  function clearLoginSecurityData() {
+    sessionStorage.removeItem("dychess_lichess_verifier");
+    sessionStorage.removeItem("dychess_lichess_state");
   }
 
   async function startLogin() {
@@ -188,7 +243,9 @@ const redirectUri =
     loginButton.disabled = true;
 
     try {
-      const bytes = crypto.getRandomValues(new Uint8Array(32));
+      const bytes = crypto.getRandomValues(
+        new Uint8Array(32)
+      );
 
       const verifier = Array.from(bytes)
         .map(byte => byte.toString(16).padStart(2, "0"))
@@ -214,10 +271,17 @@ const redirectUri =
         .map(byte => byte.toString(16).padStart(2, "0"))
         .join("");
 
-      sessionStorage.setItem("dychess_lichess_verifier", verifier);
-      sessionStorage.setItem("dychess_lichess_state", state);
+      sessionStorage.setItem(
+        "dychess_lichess_verifier",
+        verifier
+      );
 
-      const params = new URLSearchParams({
+      sessionStorage.setItem(
+        "dychess_lichess_state",
+        state
+      );
+
+      const oauthParams = new URLSearchParams({
         response_type: "code",
         client_id: window.location.hostname,
         redirect_uri: redirectUri,
@@ -227,25 +291,36 @@ const redirectUri =
       });
 
       window.location.assign(
-        "https://lichess.org/oauth?" + params.toString()
+        "https://lichess.org/oauth?" + oauthParams.toString()
       );
+
     } catch (error) {
       console.error("Login setup failed:", error);
-      showError("Could not start Lichess login. Please try again.");
+
+      showError(
+        "Could not start Lichess login. Please try again."
+      );
     }
   }
 
   async function finishLogin() {
-    const params = new URLSearchParams(window.location.search);
-    const code = params.get("code");
-    const returnedState = params.get("state");
-    const oauthError = params.get("error");
+    const callbackParams =
+      new URLSearchParams(window.location.search);
+
+    const code = callbackParams.get("code");
+    const returnedState = callbackParams.get("state");
+    const oauthError = callbackParams.get("error");
 
     if (oauthError) {
-      sessionStorage.removeItem("dychess_lichess_verifier");
-      sessionStorage.removeItem("dychess_lichess_state");
+      clearLoginSecurityData();
+      sessionStorage.removeItem(NEXT_STORAGE);
+
       history.replaceState({}, "", redirectUri);
-      showError("Lichess login was cancelled or denied. Please try again.");
+
+      showError(
+        "Lichess login was cancelled or denied. Please try again."
+      );
+
       return;
     }
 
@@ -253,48 +328,76 @@ const redirectUri =
       return;
     }
 
-    const savedState = sessionStorage.getItem("dychess_lichess_state");
-    const verifier = sessionStorage.getItem("dychess_lichess_verifier");
+    // Recover the destination saved before visiting Lichess.
+    const nextPage = getNextPage();
 
-    if (!savedState || !verifier || returnedState !== savedState) {
+    const savedState = sessionStorage.getItem(
+      "dychess_lichess_state"
+    );
+
+    const verifier = sessionStorage.getItem(
+      "dychess_lichess_verifier"
+    );
+
+    if (
+      !savedState ||
+      !verifier ||
+      returnedState !== savedState
+    ) {
       history.replaceState({}, "", redirectUri);
-      sessionStorage.removeItem("dychess_lichess_verifier");
-      sessionStorage.removeItem("dychess_lichess_state");
-      showError("Login security check failed. Please start again.");
+
+      clearLoginSecurityData();
+      sessionStorage.removeItem(NEXT_STORAGE);
+
+      showError(
+        "Login security check failed. Please start again."
+      );
+
       return;
     }
 
-    statusBox.textContent = "Verifying your Lichess account...";
+    statusBox.textContent =
+      "Verifying your Lichess account...";
+
     loginButton.disabled = true;
 
     try {
- 
-const tokenResponse = await fetch("https://lichess.org/api/token", {
-  method: "POST",
-  headers: {
-    "Content-Type": "application/x-www-form-urlencoded",
-    "Accept": "application/json"
-  },
-  body: new URLSearchParams({
-    grant_type: "authorization_code",
-    code: code,
-    code_verifier: verifier,
-    redirect_uri: redirectUri,
-    client_id: window.location.hostname
-  })
-});
+      const tokenResponse = await fetch(
+        "https://lichess.org/api/token",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type":
+              "application/x-www-form-urlencoded",
+            "Accept": "application/json"
+          },
+          body: new URLSearchParams({
+            grant_type: "authorization_code",
+            code: code,
+            code_verifier: verifier,
+            redirect_uri: redirectUri,
+            client_id: window.location.hostname
+          })
+        }
+      );
+
       if (!tokenResponse.ok) {
-        throw new Error("Lichess token exchange failed.");
+        throw new Error(
+          "Lichess token exchange failed."
+        );
       }
 
       const tokenData = await tokenResponse.json();
 
       if (!tokenData.access_token) {
-        throw new Error("Lichess did not return an access token.");
+        throw new Error(
+          "Lichess did not return an access token."
+        );
       }
 
       const loginResponse = await fetch(
-        SUPABASE_URL + "/functions/v1/lichess-player-login",
+        SUPABASE_URL +
+          "/functions/v1/lichess-player-login",
         {
           method: "POST",
           headers: {
@@ -309,124 +412,102 @@ const tokenResponse = await fetch("https://lichess.org/api/token", {
 
       const result = await loginResponse.json();
 
-      if (!loginResponse.ok || !result.verified || !result.sessionToken) {
+      if (
+        !loginResponse.ok ||
+        !result.verified ||
+        !result.sessionToken
+      ) {
         throw new Error(
-          result.error || "DYCHESS could not verify your account."
+          result.error ||
+          "DYCHESS could not verify your account."
         );
       }
 
-      localStorage.setItem(STORAGE_TOKEN, result.sessionToken);
-      localStorage.setItem(STORAGE_EXPIRY, result.expiresAt);
-      localStorage.setItem(STORAGE_USER, result.username);
+      localStorage.setItem(
+        STORAGE_TOKEN,
+        result.sessionToken
+      );
 
-      sessionStorage.removeItem("dychess_lichess_verifier");
-      sessionStorage.removeItem("dychess_lichess_state");
+      localStorage.setItem(
+        STORAGE_EXPIRY,
+        result.expiresAt
+      );
+
+      localStorage.setItem(
+        STORAGE_USER,
+        result.username
+      );
+
+      clearLoginSecurityData();
 
       history.replaceState({}, "", redirectUri);
 
       statusBox.textContent =
-        "Welcome to DYCHESS, " + result.username + "! You are signed in.";
+        "Welcome to DYCHESS, " +
+        result.username +
+        "! You are signed in.";
 
       loginButton.disabled = false;
       loginButton.textContent = "Signed in";
       logoutButton.hidden = false;
-      
-      window.location.href = nextPage;
+
+      // Clear the saved destination and return the player.
+      sessionStorage.removeItem(NEXT_STORAGE);
+
+      window.location.replace(nextPage);
+
     } catch (error) {
       console.error("Lichess login failed:", error);
 
-      sessionStorage.removeItem("dychess_lichess_verifier");
-      sessionStorage.removeItem("dychess_lichess_state");
+      clearLoginSecurityData();
 
       history.replaceState({}, "", redirectUri);
 
       showError(
-        "Login could not be completed. Please try again. If this continues, contact DYCHESS Support."
+        "Login could not be completed. Please try again. " +
+        "If this continues, contact DYCHESS Support."
       );
     }
   }
 
- loginButton.addEventListener("click", startLogin);
+  loginButton.addEventListener("click", startLogin);
 
-async function initializeLogin() {
-  const params = new URLSearchParams(window.location.search);
+  async function initializeLogin() {
+    const params =
+      new URLSearchParams(window.location.search);
 
-  // Complete an OAuth callback first, if one is pending.
-  if (params.has("code") || params.has("error")) {
-    await finishLogin();
-    return;
-  }
-
-  const token = localStorage.getItem(STORAGE_TOKEN);
-  const expiry = localStorage.getItem(STORAGE_EXPIRY);
-
-  if (!token) return;
-
-  if (!expiry || new Date(expiry).getTime() <= Date.now()) {
-    localStorage.removeItem(STORAGE_TOKEN);
-    localStorage.removeItem(STORAGE_EXPIRY);
-    localStorage.removeItem(STORAGE_USER);
-    return;
-  }
-
-  statusBox.textContent = "Checking your DYCHESS session...";
-  loginButton.disabled = true;
-
-  try {
-    const response = await fetch(
-      SUPABASE_URL + "/functions/v1/validate-lichess-player-session",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "apikey": SUPABASE_PUBLISHABLE_KEY,
-          "x-dychess-session": token
-        },
-        body: JSON.stringify({})
-      }
-    );
-
-    const result = await response.json();
-
-    if (!response.ok || !result.valid) {
-      throw new Error("Session is no longer valid.");
+    // Finish OAuth callback before checking an existing session.
+    if (params.has("code") || params.has("error")) {
+      await finishLogin();
+      return;
     }
 
-    localStorage.setItem(STORAGE_USER, result.player.username);
+    const token = localStorage.getItem(STORAGE_TOKEN);
+    const expiry = localStorage.getItem(STORAGE_EXPIRY);
+
+    if (!token) {
+      return;
+    }
+
+    if (
+      !expiry ||
+      new Date(expiry).getTime() <= Date.now()
+    ) {
+      localStorage.removeItem(STORAGE_TOKEN);
+      localStorage.removeItem(STORAGE_EXPIRY);
+      localStorage.removeItem(STORAGE_USER);
+      return;
+    }
 
     statusBox.textContent =
-      "Welcome back, " + result.player.username + "! You are signed in.";
+      "Checking your DYCHESS session...";
 
-    loginButton.textContent = "Signed in";
-    logoutButton.hidden = false;
-    loginButton.disabled = false;
+    loginButton.disabled = true;
 
-  } catch (error) {
-    console.error("Session validation failed:", error);
-
-    localStorage.removeItem(STORAGE_TOKEN);
-    localStorage.removeItem(STORAGE_EXPIRY);
-    localStorage.removeItem(STORAGE_USER);
-
-    statusBox.textContent =
-      "Please sign in with Lichess to continue.";
-
-    loginButton.textContent = "Sign in with Lichess";
-    loginButton.disabled = false;
-  }
-}
-
-initializeLogin();
-  logoutButton.addEventListener("click", async () => {
-  const token = localStorage.getItem(STORAGE_TOKEN);
-
-  logoutButton.disabled = true;
-  statusBox.textContent = "Signing out...";
-
-  try {
-    if (token) {
-      await fetch(
-        SUPABASE_URL + "/functions/v1/logout-lichess-player",
+    try {
+      const response = await fetch(
+        SUPABASE_URL +
+          "/functions/v1/validate-lichess-player-session",
         {
           method: "POST",
           headers: {
@@ -437,22 +518,110 @@ initializeLogin();
           body: JSON.stringify({})
         }
       );
+
+      const result = await response.json();
+
+      if (!response.ok || !result.valid) {
+        throw new Error(
+          "Session is no longer valid."
+        );
+      }
+
+      localStorage.setItem(
+        STORAGE_USER,
+        result.player.username
+      );
+
+      statusBox.textContent =
+        "Welcome back, " +
+        result.player.username +
+        "! You are signed in.";
+
+      loginButton.textContent = "Signed in";
+      logoutButton.hidden = false;
+      loginButton.disabled = false;
+
+      // If this login page was opened with a destination,
+      // return an already-signed-in player there too.
+      if (requestedNext) {
+        const nextPage = getNextPage();
+
+        sessionStorage.removeItem(NEXT_STORAGE);
+
+        window.location.replace(nextPage);
+        return;
+      }
+
+    } catch (error) {
+      console.error(
+        "Session validation failed:",
+        error
+      );
+
+      localStorage.removeItem(STORAGE_TOKEN);
+      localStorage.removeItem(STORAGE_EXPIRY);
+      localStorage.removeItem(STORAGE_USER);
+
+      statusBox.textContent =
+        "Please sign in with Lichess to continue.";
+
+      loginButton.textContent =
+        "Sign in with Lichess";
+
+      loginButton.disabled = false;
     }
-  } catch (error) {
-    console.error("Server sign-out request failed:", error);
   }
 
-  localStorage.removeItem(STORAGE_TOKEN);
-  localStorage.removeItem(STORAGE_EXPIRY);
-  localStorage.removeItem(STORAGE_USER);
+  initializeLogin();
 
-  logoutButton.hidden = true;
-  logoutButton.disabled = false;
-  loginButton.textContent = "Continue with Lichess";
-  loginButton.disabled = false;
+  logoutButton.addEventListener("click", async () => {
+    const token = localStorage.getItem(STORAGE_TOKEN);
 
-  statusBox.textContent = "You have signed out of DYCHESS.";
-});
+    logoutButton.disabled = true;
+    statusBox.textContent = "Signing out...";
+
+    try {
+      if (token) {
+        await fetch(
+          SUPABASE_URL +
+            "/functions/v1/logout-lichess-player",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "apikey": SUPABASE_PUBLISHABLE_KEY,
+              "x-dychess-session": token
+            },
+            body: JSON.stringify({})
+          }
+        );
+      }
+
+    } catch (error) {
+      console.error(
+        "Server sign-out request failed:",
+        error
+      );
+    }
+
+    localStorage.removeItem(STORAGE_TOKEN);
+    localStorage.removeItem(STORAGE_EXPIRY);
+    localStorage.removeItem(STORAGE_USER);
+
+    sessionStorage.removeItem(NEXT_STORAGE);
+
+    logoutButton.hidden = true;
+    logoutButton.disabled = false;
+
+    loginButton.textContent =
+      "Continue with Lichess";
+
+    loginButton.disabled = false;
+
+    statusBox.textContent =
+      "You have signed out of DYCHESS.";
+  });
 </script>
+
 </body>
 </html>
