@@ -111,6 +111,42 @@
       margin-bottom: 5px;
     }
 
+    .join-area {
+      margin-top: 22px;
+      padding: 18px;
+      background: rgba(0,0,0,.2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+
+    .join-button {
+      display: inline-block;
+      border: 0;
+      border-radius: 8px;
+      padding: 13px 24px;
+      background: var(--gold);
+      color: #07140e;
+      font-size: 15px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .join-button:hover {
+      background: #edca76;
+    }
+
+    .join-button:disabled {
+      opacity: .65;
+      cursor: not-allowed;
+    }
+
+    #joinMessage {
+      margin: 12px 0 0;
+      font-size: 14px;
+      line-height: 1.5;
+      color: var(--muted);
+    }
+
     .item {
       padding: 14px 0;
       border-bottom: 1px solid var(--border);
@@ -168,6 +204,8 @@
 
     const content = document.getElementById("content");
 
+    let currentClub = null;
+
     function escapeHTML(value) {
       return String(value ?? "").replace(/[&<>"']/g, character => ({
         "&": "&amp;",
@@ -189,6 +227,117 @@
       }
 
       return response.json();
+    }
+
+    function loginToJoin() {
+      const slug = new URLSearchParams(window.location.search).get("slug");
+
+      const nextPage = `club.html?slug=${slug}`;
+
+      window.location.href =
+        "player-login.html?next=" + encodeURIComponent(nextPage);
+    }
+
+    async function requestToJoin() {
+      const button = document.getElementById("joinButton");
+      const message = document.getElementById("joinMessage");
+
+      if (!currentClub || !button || !message) return;
+
+      const session = localStorage.getItem("dychess_player_session");
+
+      if (!session) {
+        loginToJoin();
+        return;
+      }
+
+      button.disabled = true;
+      button.textContent = "Submitting...";
+      message.textContent = "Submitting your membership request...";
+
+      try {
+        const response = await fetch(
+          `${SUPABASE_URL}/functions/v1/club-management`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "apikey": SUPABASE_KEY,
+              "Authorization": "Bearer " + SUPABASE_KEY,
+              "x-dychess-session": session
+            },
+            body: JSON.stringify({
+              action: "request_join",
+              club_id: currentClub.id
+            })
+          }
+        );
+
+        let data = {};
+
+        try {
+          data = await response.json();
+        } catch (_) {
+          data = {};
+        }
+
+        if (response.status === 401 || response.status === 403) {
+          message.textContent =
+            "Your sign-in session may have expired. Please sign in again.";
+
+          button.disabled = false;
+          button.textContent = "Sign In Again";
+          button.onclick = loginToJoin;
+          return;
+        }
+
+        if (!response.ok) {
+          throw new Error(
+            data.error || data.message || "Your request could not be submitted."
+          );
+        }
+
+        const outcome = data.status || data.result || "";
+
+        if (outcome === "already_member") {
+          message.textContent = "You are already an approved member of this club.";
+          button.textContent = "Already a Member";
+          button.disabled = true;
+          return;
+        }
+
+        if (outcome === "already_pending") {
+          message.textContent =
+            "Your membership request is already awaiting organizer approval.";
+          button.textContent = "Request Pending";
+          button.disabled = true;
+          return;
+        }
+
+        if (outcome === "requested" || outcome === "pending") {
+          message.textContent =
+            "Your request has been submitted. The club organizer must approve it before you become a member.";
+          button.textContent = "Request Submitted";
+          button.disabled = true;
+          return;
+        }
+
+        message.textContent =
+          data.message ||
+          "Your request has been submitted. Await approval from the club organizer.";
+
+        button.textContent = "Request Submitted";
+        button.disabled = true;
+
+      } catch (error) {
+        console.error(error);
+
+        message.textContent =
+          error.message || "Something went wrong. Please try again.";
+
+        button.disabled = false;
+        button.textContent = "Request to Join";
+      }
     }
 
     async function loadClub() {
@@ -221,6 +370,7 @@
         }
 
         const club = clubs[0];
+        currentClub = club;
 
         content.innerHTML = `
           <section class="hero">
@@ -232,6 +382,19 @@
               ${[club.city, club.country].filter(Boolean).map(escapeHTML).join(", ") || "Chess Club"}
             </p>
             <p class="muted">${escapeHTML(club.description || "Welcome to this chess club.")}</p>
+
+            <div class="join-area">
+              <button
+                type="button"
+                class="join-button"
+                id="joinButton"
+                onclick="requestToJoin()">
+                Request to Join
+              </button>
+              <p id="joinMessage">
+                Sign in with Lichess to request membership. The club organizer must approve your request.
+              </p>
+            </div>
 
             <div class="stats">
               <div class="stat">
@@ -288,17 +451,18 @@
       try {
         const memberships = await getRows(
           "club_members",
-          `select=player_id,joined_at&club_id=eq.${clubId}&order=joined_at.asc`
+          `select=player_id,joined_at&club_id=eq.${clubId}&status=eq.approved&order=joined_at.asc`
         );
 
         document.getElementById("memberCount").textContent = memberships.length;
 
         if (!memberships.length) {
-          target.innerHTML = '<p class="empty">No members have joined this club yet.</p>';
+          target.innerHTML = '<p class="empty">No approved members yet. You can be the first to request membership.</p>';
           return;
         }
 
         const ids = [...new Set(memberships.map(m => m.player_id))];
+
         const players = await getRows(
           "players",
           `select=id,display_name,lichess_username&id=in.(${ids.join(",")})`
