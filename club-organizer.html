@@ -2,256 +2,287 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Club Organizer Dashboard | DYCHESS</title>
-  <style>
-    :root {
-      --bg: #07140e;
-      --panel: #10251a;
-      --gold: #d9b45b;
-      --green: #7fae3d;
-      --text: #f4f5ef;
-      --muted: #aab7aa;
-      --border: rgba(217,180,91,.25);
-      --danger: #e47777;
-    }
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      padding: 24px 16px 50px;
-      background: var(--bg);
-      color: var(--text);
-      font-family: Arial, sans-serif;
-    }
-    .container { max-width: 1050px; margin: auto; }
-    header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 15px;
-      flex-wrap: wrap;
-      margin-bottom: 28px;
-    }
-    .brand { color: var(--gold); font-weight: 800; letter-spacing: 2px; }
-    h1 { color: var(--gold); margin: 12px 0 8px; }
-    h2 { color: var(--gold); font-size: 21px; }
-    h3 { color: var(--gold); }
-    p { color: var(--muted); line-height: 1.6; }
-    .panel {
-      background: var(--panel);
-      border: 1px solid var(--border);
-      border-radius: 15px;
-      padding: 22px;
-      margin-bottom: 22px;
-    }
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-      gap: 16px;
-    }
-    label {
-      display: block;
-      color: var(--muted);
-      font-size: 13px;
-      margin: 14px 0 7px;
-    }
-    input, textarea {
-      width: 100%;
-      padding: 12px;
-      color: white;
-      background: #07140e;
-      border: 1px solid #35513d;
-      border-radius: 8px;
-      font: inherit;
-      outline: none;
-    }
-    input:focus, textarea:focus { border-color: var(--gold); }
-    textarea { min-height: 95px; resize: vertical; }
-    button, .button {
-      display: inline-block;
-      border: 0;
-      border-radius: 8px;
-      padding: 12px 17px;
-      margin-top: 15px;
-      background: var(--gold);
-      color: #10170f;
-      font-weight: 700;
-      cursor: pointer;
-      text-decoration: none;
-    }
-    button.secondary, .button.secondary {
-      background: #24432d;
-      color: white;
-      border: 1px solid #49664b;
-    }
-    button.danger {
-      background: #482323;
-      color: #ffd0d0;
-      border: 1px solid #874747;
-    }
-    button:disabled { opacity: .55; cursor: wait; }
-    .club-card {
-      background: #0a1b11;
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 18px;
-    }
-    .club-card h3 { color: var(--gold); margin: 0 0 8px; }
-    .club-card p { margin: 7px 0; overflow-wrap: anywhere; }
-    .status {
-      display: inline-block;
-      color: #b9e28b;
-      background: rgba(127,174,61,.13);
-      padding: 5px 9px;
-      border-radius: 20px;
-      font-size: 12px;
-      text-transform: capitalize;
-    }
-    .message {
-      display: none;
-      padding: 12px 14px;
-      border-radius: 8px;
-      margin: 15px 0;
-      line-height: 1.5;
-      overflow-wrap: anywhere;
-    }
-    .message.error { display: block; color: #ffd0d0; background: #482323; }
-    .message.success { display: block; color: #d7f4c3; background: #1c3b25; }
-    .empty { text-align: center; padding: 25px 10px; color: var(--muted); }
-    .small { font-size: 13px; }
-    .hidden { display: none !important; }
-    .actions { display: flex; gap: 8px; flex-wrap: wrap; }
-    .actions button, .actions a { margin-top: 12px; }
-    .request-area {
-      border-top: 1px solid var(--border);
-      margin-top: 18px;
-      padding-top: 15px;
-    }
-    .request-area h4 {
-      color: var(--gold);
-      margin: 0 0 12px;
-      font-size: 16px;
-    }
-    .request-card {
-      background: rgba(0,0,0,.22);
-      border: 1px solid var(--border);
-      border-radius: 9px;
-      padding: 13px;
-      margin-top: 10px;
-    }
-    .request-card strong { display: block; margin-bottom: 5px; }
-    .request-card .actions button { margin-top: 10px; }
-    .request-status {
-      color: var(--muted);
-      font-size: 13px;
-      margin-top: 8px;
-    }
-    .muted-link { color: var(--gold); }
-    footer { text-align: center; color: #718174; margin-top: 35px; font-size: 12px; }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Club Organizer Dashboard | DYCHESS</title>
+
+<style>
+:root {
+  --bg:#07140e;
+  --panel:#10251a;
+  --gold:#d9b45b;
+  --green:#7fae3d;
+  --text:#f4f5ef;
+  --muted:#aab7aa;
+  --border:rgba(217,180,91,.25);
+  --danger:#e47777;
+}
+* { box-sizing:border-box; }
+body {
+  margin:0;
+  padding:24px 16px 50px;
+  background:var(--bg);
+  color:var(--text);
+  font-family:Arial,sans-serif;
+}
+.container { max-width:1100px; margin:auto; }
+header {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:15px;
+  flex-wrap:wrap;
+  margin-bottom:28px;
+}
+.brand { color:var(--gold); font-weight:800; letter-spacing:2px; }
+h1,h2,h3,h4 { color:var(--gold); }
+h1 { margin:12px 0 8px; }
+h2 { font-size:21px; }
+p { color:var(--muted); line-height:1.6; }
+.panel {
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:15px;
+  padding:22px;
+  margin-bottom:22px;
+}
+.grid {
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
+  gap:16px;
+}
+label {
+  display:block;
+  color:var(--muted);
+  font-size:13px;
+  margin:14px 0 7px;
+}
+input,textarea,select {
+  width:100%;
+  padding:12px;
+  color:white;
+  background:#07140e;
+  border:1px solid #35513d;
+  border-radius:8px;
+  font:inherit;
+  outline:none;
+}
+input:focus,textarea:focus,select:focus {
+  border-color:var(--gold);
+}
+textarea { min-height:95px; resize:vertical; }
+button,.button {
+  display:inline-block;
+  border:0;
+  border-radius:8px;
+  padding:11px 15px;
+  margin-top:12px;
+  background:var(--gold);
+  color:#10170f;
+  font-weight:700;
+  cursor:pointer;
+  text-decoration:none;
+  font-size:13px;
+}
+button.secondary,.button.secondary {
+  background:#24432d;
+  color:white;
+  border:1px solid #49664b;
+}
+button.danger {
+  background:#482323;
+  color:#ffd0d0;
+  border:1px solid #874747;
+}
+button:disabled { opacity:.55; cursor:wait; }
+.club-card {
+  background:#0a1b11;
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:18px;
+  min-width:0;
+}
+.club-card h3 { margin:0 0 8px; }
+.club-card p { margin:7px 0; overflow-wrap:anywhere; }
+.status {
+  display:inline-block;
+  color:#b9e28b;
+  background:rgba(127,174,61,.13);
+  padding:5px 9px;
+  border-radius:20px;
+  font-size:12px;
+  text-transform:capitalize;
+}
+.message {
+  display:none;
+  padding:12px 14px;
+  border-radius:8px;
+  margin:15px 0;
+  line-height:1.5;
+  overflow-wrap:anywhere;
+}
+.message.error { display:block; color:#ffd0d0; background:#482323; }
+.message.success { display:block; color:#d7f4c3; background:#1c3b25; }
+.empty { text-align:center; padding:20px 10px; color:var(--muted); }
+.small { font-size:13px; }
+.hidden { display:none !important; }
+.actions { display:flex; gap:8px; flex-wrap:wrap; }
+.actions button,.actions a { margin-top:12px; }
+.request-area,.team-area {
+  border-top:1px solid var(--border);
+  margin-top:20px;
+  padding-top:17px;
+}
+.request-area h4,.team-area h4 {
+  color:var(--gold);
+  margin:0 0 12px;
+  font-size:16px;
+}
+.request-card,.team-card {
+  background:rgba(0,0,0,.22);
+  border:1px solid var(--border);
+  border-radius:9px;
+  padding:14px;
+  margin-top:12px;
+  min-width:0;
+}
+.request-card strong { display:block; margin-bottom:5px; }
+.team-card h4 { margin:0 0 8px; font-size:17px; }
+.team-card p { margin:6px 0; }
+.team-card.archived { opacity:.7; }
+.member-row {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:10px;
+  padding:9px 0;
+  border-bottom:1px solid rgba(217,180,91,.12);
+  font-size:13px;
+}
+.member-row:last-child { border-bottom:0; }
+.member-name { overflow-wrap:anywhere; }
+.captain-label {
+  color:var(--gold);
+  font-size:11px;
+  margin-left:5px;
+}
+.subsection {
+  margin-top:15px;
+  padding-top:12px;
+  border-top:1px solid rgba(217,180,91,.15);
+}
+.subsection h5 {
+  color:var(--muted);
+  margin:0 0 8px;
+  font-size:13px;
+}
+footer {
+  text-align:center;
+  color:#718174;
+  margin-top:35px;
+  font-size:12px;
+}
+</style>
 </head>
+
 <body>
 <div class="container">
-  <header>
-    <div class="brand">DYCHESS</div>
+
+<header>
+  <div class="brand">DYCHESS</div>
+  <div class="actions">
+    <a class="button secondary" href="clubs.html">Clubs Home</a>
+    <button class="secondary" id="signOutBtn" type="button">Sign Out</button>
+  </div>
+</header>
+
+<section>
+  <h1>Club Organizer Dashboard</h1>
+  <p>Manage your clubs, members, teams and team membership requests.</p>
+  <p id="welcomeText">Loading organizer profile...</p>
+</section>
+
+<div id="pageMessage" class="message"></div>
+
+<section class="panel">
+  <h2>Create a New Club</h2>
+  <p>Each club has its own public page and unique web address.</p>
+
+  <form id="createClubForm">
+    <div class="grid">
+      <div>
+        <label for="clubName">Club name *</label>
+        <input id="clubName" maxlength="80" required placeholder="e.g. Ekiti Chess Club">
+      </div>
+      <div>
+        <label for="clubSlug">Club URL address *</label>
+        <input id="clubSlug" maxlength="70" required placeholder="e.g. ekiti-chess-club">
+      </div>
+      <div>
+        <label for="clubCountry">Country</label>
+        <input id="clubCountry" maxlength="80" placeholder="e.g. Nigeria">
+      </div>
+      <div>
+        <label for="clubCity">City or State</label>
+        <input id="clubCity" maxlength="80" placeholder="e.g. Ado-Ekiti">
+      </div>
+      <div>
+        <label for="clubLogo">Logo image URL (optional)</label>
+        <input id="clubLogo" type="url" placeholder="https://...">
+      </div>
+    </div>
+
+    <label for="clubDescription">Club description</label>
+    <textarea id="clubDescription" maxlength="1000"></textarea>
+    <button id="createBtn" type="submit">Create Club</button>
+  </form>
+</section>
+
+<section class="panel">
+  <h2>My Clubs</h2>
+  <p>Only clubs belonging to your organizer account appear here.</p>
+  <div id="clubsList" class="grid">
+    <div class="empty">Loading your clubs...</div>
+  </div>
+  <button class="secondary" id="refreshBtn" type="button">Refresh My Clubs</button>
+</section>
+
+<section class="panel hidden" id="editPanel">
+  <h2>Edit Club Details</h2>
+  <form id="editClubForm">
+    <input type="hidden" id="editClubId">
+
+    <label for="editName">Club name *</label>
+    <input id="editName" maxlength="80" required>
+
+    <label for="editSlug">Club URL address *</label>
+    <input id="editSlug" maxlength="70" required>
+
+    <label for="editDescription">Description</label>
+    <textarea id="editDescription" maxlength="1000"></textarea>
+
+    <div class="grid">
+      <div>
+        <label for="editCountry">Country</label>
+        <input id="editCountry" maxlength="80">
+      </div>
+      <div>
+        <label for="editCity">City or State</label>
+        <input id="editCity" maxlength="80">
+      </div>
+    </div>
+
+    <label for="editLogo">Logo image URL</label>
+    <input id="editLogo" type="url">
+
     <div class="actions">
-      <a class="button secondary" href="clubs.html">Clubs Home</a>
-      <button class="secondary" id="signOutBtn" type="button">Sign Out</button>
+      <button id="saveEditBtn" type="submit">Save Changes</button>
+      <button class="secondary" id="cancelEditBtn" type="button">Cancel</button>
     </div>
-  </header>
+  </form>
+</section>
 
-  <section>
-    <h1>Club Organizer Dashboard</h1>
-    <p>Manage your chess clubs, membership requests, create new clubs and update your club information.</p>
-    <p id="welcomeText">Loading organizer profile...</p>
-  </section>
-
-  <div id="pageMessage" class="message"></div>
-
-  <section class="panel">
-    <h2>Create a New Club</h2>
-    <p>Each club you create will have its own public page and unique web address.</p>
-
-    <form id="createClubForm">
-      <div class="grid">
-        <div>
-          <label for="clubName">Club name *</label>
-          <input id="clubName" maxlength="80" required placeholder="e.g. Ekiti Chess Club">
-        </div>
-        <div>
-          <label for="clubSlug">Club URL address *</label>
-          <input id="clubSlug" maxlength="70" required placeholder="e.g. ekiti-chess-club">
-          <p class="small">Your public page will use this unique address.</p>
-        </div>
-        <div>
-          <label for="clubCountry">Country</label>
-          <input id="clubCountry" maxlength="80" placeholder="e.g. Nigeria">
-        </div>
-        <div>
-          <label for="clubCity">City or State</label>
-          <input id="clubCity" maxlength="80" placeholder="e.g. Ado-Ekiti">
-        </div>
-        <div>
-          <label for="clubLogo">Logo image URL (optional)</label>
-          <input id="clubLogo" type="url" placeholder="https://...">
-        </div>
-      </div>
-
-      <label for="clubDescription">Club description</label>
-      <textarea id="clubDescription" maxlength="1000" placeholder="Tell players about your club..."></textarea>
-
-      <button id="createBtn" type="submit">Create Club</button>
-    </form>
-  </section>
-
-  <section class="panel">
-    <h2>My Clubs</h2>
-    <p>Only clubs belonging to your organizer account will appear here.</p>
-    <div id="clubsList" class="grid">
-      <div class="empty">Loading your clubs...</div>
-    </div>
-    <button class="secondary" id="refreshBtn" type="button">Refresh My Clubs</button>
-  </section>
-
-  <section class="panel hidden" id="editPanel">
-    <h2>Edit Club Details</h2>
-    <p>Update the information for the selected club.</p>
-
-    <form id="editClubForm">
-      <input type="hidden" id="editClubId">
-
-      <label for="editName">Club name *</label>
-      <input id="editName" maxlength="80" required>
-
-      <label for="editSlug">Club URL address *</label>
-      <input id="editSlug" maxlength="70" required>
-
-      <label for="editDescription">Description</label>
-      <textarea id="editDescription" maxlength="1000"></textarea>
-
-      <div class="grid">
-        <div>
-          <label for="editCountry">Country</label>
-          <input id="editCountry" maxlength="80">
-        </div>
-        <div>
-          <label for="editCity">City or State</label>
-          <input id="editCity" maxlength="80">
-        </div>
-      </div>
-
-      <label for="editLogo">Logo image URL</label>
-      <input id="editLogo" type="url">
-
-      <div class="actions">
-        <button id="saveEditBtn" type="submit">Save Changes</button>
-        <button class="secondary" id="cancelEditBtn" type="button">Cancel</button>
-      </div>
-    </form>
-  </section>
-
-  <footer>DYCHESS Club Network</footer>
+<footer>DYCHESS Club Network</footer>
 </div>
 
 <script>
@@ -264,55 +295,30 @@ const username = localStorage.getItem("dychess_player_username");
 const messageBox = document.getElementById("pageMessage");
 const clubsList = document.getElementById("clubsList");
 
-function showMessage(message, type = "error") {
+function showMessage(message,type="error") {
   messageBox.textContent = message;
   messageBox.className = "message " + type;
 }
-
 function clearMessage() {
   messageBox.textContent = "";
   messageBox.className = "message";
 }
-
 function escapeHTML(value) {
-  return String(value ?? "").replace(/[&<>"']/g, char => ({
-    "&": "&amp;",
-    "<": "&lt;",
-    ">": "&gt;",
-    '"': "&quot;",
-    "'": "&#039;"
+  return String(value ?? "").replace(/[&<>"']/g,char => ({
+    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
   })[char]);
 }
-
 function makeSlug(value) {
-  return value.toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
+  return value.toLowerCase().trim()
+    .replace(/[^a-z0-9]+/g,"-")
+    .replace(/^-+|-+$/g,"");
 }
-
-document.getElementById("clubName").addEventListener("input", event => {
-  const slugInput = document.getElementById("clubSlug");
-  if (!slugInput.dataset.edited) {
-    slugInput.value = makeSlug(event.target.value);
-  }
-});
-
-document.getElementById("clubSlug").addEventListener("input", event => {
-  event.target.dataset.edited = "true";
-  event.target.value = makeSlug(event.target.value);
-});
-
-document.getElementById("editSlug").addEventListener("input", event => {
-  event.target.value = makeSlug(event.target.value);
-});
-
 function loginAgain() {
-  const currentPage = "club-organizer.html";
-  window.location.href = "player-login.html?next=" + encodeURIComponent(currentPage);
+  window.location.href =
+    "player-login.html?next=" + encodeURIComponent("club-organizer.html");
 }
 
-async function callFunction(functionName, payload) {
+async function callFunction(functionName,payload) {
   if (!session) {
     loginAgain();
     throw new Error("Please sign in with Lichess again.");
@@ -321,14 +327,14 @@ async function callFunction(functionName, payload) {
   const response = await fetch(
     SUPABASE_URL + "/functions/v1/" + functionName,
     {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "apikey": SUPABASE_KEY,
-        "Authorization": "Bearer " + SUPABASE_KEY,
-        "x-dychess-session": session
+      method:"POST",
+      headers:{
+        "Content-Type":"application/json",
+        "apikey":SUPABASE_KEY,
+        "Authorization":"Bearer " + SUPABASE_KEY,
+        "x-dychess-session":session
       },
-      body: JSON.stringify(payload)
+      body:JSON.stringify(payload)
     }
   );
 
@@ -336,24 +342,37 @@ async function callFunction(functionName, payload) {
   try {
     result = await response.json();
   } catch {
-    throw new Error("The server returned an unreadable response. Please try again.");
+    throw new Error("The server returned an unreadable response.");
   }
 
   if (!response.ok || result.success === false) {
-    const errorText = result.error || result.message || "The request could not be completed.";
+    const errorText = result.error || result.message ||
+      "The request could not be completed.";
 
-    if (
-      response.status === 401 ||
-      /session|expired|sign in|unauthori[sz]ed/i.test(errorText)
-    ) {
+    if (response.status === 401 ||
+        /session|expired|sign in|unauthori[sz]ed/i.test(errorText)) {
       showMessage("Your Lichess session may have expired. Please sign in again.");
     }
-
     throw new Error(errorText);
   }
-
   return result;
 }
+
+async function callTeamFunction(payload) {
+  return callFunction("club-teams",payload);
+}
+
+document.getElementById("clubName").addEventListener("input",event => {
+  const slug = document.getElementById("clubSlug");
+  if (!slug.dataset.edited) slug.value = makeSlug(event.target.value);
+});
+document.getElementById("clubSlug").addEventListener("input",event => {
+  event.target.dataset.edited = "true";
+  event.target.value = makeSlug(event.target.value);
+});
+document.getElementById("editSlug").addEventListener("input",event => {
+  event.target.value = makeSlug(event.target.value);
+});
 
 async function loadOrganizer() {
   if (!session) {
@@ -362,13 +381,12 @@ async function loadOrganizer() {
   }
 
   try {
-    const result = await callFunction("club-organizers", {
-      action: "status"
-    });
+    const result = await callFunction("club-organizers",{action:"status"});
 
     if (!result.registered) {
       showMessage("This Lichess account is not registered as a club organizer.");
-      document.getElementById("welcomeText").textContent = "Organizer registration required.";
+      document.getElementById("welcomeText").textContent =
+        "Organizer registration required.";
       return;
     }
 
@@ -377,9 +395,10 @@ async function loadOrganizer() {
       "Welcome, " + (organizer.display_name || username || "Organizer") + ".";
 
     await loadMyClubs();
-  } catch (error) {
+  } catch(error) {
     showMessage(error.message);
-    clubsList.innerHTML = '<div class="empty">Unable to load your clubs.</div>';
+    clubsList.innerHTML =
+      '<div class="empty">Unable to load your clubs.</div>';
   }
 }
 
@@ -388,10 +407,7 @@ async function loadMyClubs() {
   clubsList.innerHTML = '<div class="empty">Loading your clubs...</div>';
 
   try {
-    const result = await callFunction("club-management", {
-      action: "my_clubs"
-    });
-
+    const result = await callFunction("club-management",{action:"my_clubs"});
     const clubs = Array.isArray(result.clubs) ? result.clubs : [];
 
     if (!clubs.length) {
@@ -401,14 +417,20 @@ async function loadMyClubs() {
     }
 
     clubsList.innerHTML = clubs.map(club => {
-      const publicUrl = "club.html?slug=" + encodeURIComponent(club.slug || "");
+      const publicUrl = "club.html?slug=" +
+        encodeURIComponent(club.slug || "");
+
       return `
         <article class="club-card">
           <h3>${escapeHTML(club.name)}</h3>
           <span class="status">${escapeHTML(club.status || "active")}</span>
           <p>${escapeHTML(club.description || "No description added yet.")}</p>
-          <p class="small">${escapeHTML([club.city, club.country].filter(Boolean).join(", ") || "Location not provided")}</p>
+          <p class="small">${escapeHTML(
+            [club.city,club.country].filter(Boolean).join(", ") ||
+            "Location not provided"
+          )}</p>
           <p class="small">URL: /club.html?slug=${escapeHTML(club.slug || "")}</p>
+
           <div class="actions">
             <button type="button" class="secondary" data-edit="${escapeHTML(club.id)}">Edit Club</button>
             <a class="button" href="${publicUrl}">View Public Page</a>
@@ -416,11 +438,37 @@ async function loadMyClubs() {
 
           <div class="request-area">
             <h4>Membership Requests</h4>
-            <div id="requests-${escapeHTML(club.id)}" class="request-list">
+            <div id="requests-${escapeHTML(club.id)}">
               <p class="small">Loading membership requests...</p>
             </div>
             <button type="button" class="secondary" data-refresh-requests="${escapeHTML(club.id)}">
               Refresh Requests
+            </button>
+          </div>
+
+          <div class="team-area">
+            <h4>Club Teams</h4>
+            <p class="small">Create and manage teams belonging to this club.</p>
+
+            <form data-create-team="${escapeHTML(club.id)}">
+              <label>New team name</label>
+              <input name="teamName" maxlength="60" required placeholder="e.g. Senior Team">
+
+              <label>Team description</label>
+              <textarea name="teamDescription" maxlength="500" placeholder="Describe this team..."></textarea>
+
+              <label>Team logo URL (optional)</label>
+              <input name="teamLogo" type="url" placeholder="https://...">
+
+              <button type="submit">Create Team</button>
+            </form>
+
+            <div id="teams-${escapeHTML(club.id)}">
+              <p class="small">Loading teams...</p>
+            </div>
+
+            <button type="button" class="secondary" data-refresh-teams="${escapeHTML(club.id)}">
+              Refresh Teams
             </button>
           </div>
         </article>
@@ -428,26 +476,54 @@ async function loadMyClubs() {
     }).join("");
 
     clubsList.querySelectorAll("[data-edit]").forEach(button => {
-      button.addEventListener("click", () => {
-        const club = clubs.find(item => String(item.id) === button.dataset.edit);
+      button.addEventListener("click",() => {
+        const club = clubs.find(item =>
+          String(item.id) === button.dataset.edit
+        );
         if (club) openEditPanel(club);
       });
     });
 
     clubsList.querySelectorAll("[data-refresh-requests]").forEach(button => {
-      button.addEventListener("click", () => {
-        const club = clubs.find(item => String(item.id) === button.dataset.refreshRequests);
+      button.addEventListener("click",() => {
+        const club = clubs.find(item =>
+          String(item.id) === button.dataset.refreshRequests
+        );
         if (club) loadRequestsForClub(club);
       });
     });
 
-    await Promise.all(clubs.map(club => loadRequestsForClub(club)));
+    clubsList.querySelectorAll("[data-refresh-teams]").forEach(button => {
+      button.addEventListener("click",() => {
+        const club = clubs.find(item =>
+          String(item.id) === button.dataset.refreshTeams
+        );
+        if (club) loadTeamsForClub(club);
+      });
+    });
 
-  } catch (error) {
-    clubsList.innerHTML = '<div class="empty">Unable to load your clubs.</div>';
+    clubsList.querySelectorAll("[data-create-team]").forEach(form => {
+      form.addEventListener("submit",event => {
+        event.preventDefault();
+        createTeam(form.dataset.createTeam,form);
+      });
+    });
+
+    await Promise.all(clubs.map(async club => {
+      await Promise.all([
+        loadRequestsForClub(club),
+        loadTeamsForClub(club)
+      ]);
+    }));
+
+  } catch(error) {
+    clubsList.innerHTML =
+      '<div class="empty">Unable to load your clubs.</div>';
     showMessage(error.message);
   }
 }
+
+// CLUB MEMBERSHIP REQUESTS
 
 async function loadRequestsForClub(club) {
   const target = document.getElementById("requests-" + club.id);
@@ -456,19 +532,19 @@ async function loadRequestsForClub(club) {
   target.innerHTML = '<p class="small">Loading membership requests...</p>';
 
   try {
-    const result = await callFunction("club-management", {
-      action: "list_requests",
-      club_id: club.id
+    const result = await callFunction("club-management",{
+      action:"list_requests",
+      club_id:club.id
     });
 
     const requests = Array.isArray(result.requests)
       ? result.requests
       : Array.isArray(result.pending_requests)
-        ? result.pending_requests
-        : [];
+        ? result.pending_requests : [];
 
     if (!requests.length) {
-      target.innerHTML = '<p class="small">There are no pending membership requests for this club.</p>';
+      target.innerHTML =
+        '<p class="small">There are no pending membership requests.</p>';
       return;
     }
 
@@ -486,89 +562,386 @@ async function loadRequestsForClub(club) {
       return `
         <div class="request-card">
           <strong>${escapeHTML(playerName)}</strong>
-          <span class="small">Membership request</span>
+          <span class="small">Club membership request</span>
           <div class="actions">
-            <button
-              type="button"
-              data-review="approved"
-              data-club-id="${escapeHTML(club.id)}"
-              data-request-id="${escapeHTML(request.id)}">
-              Approve
-            </button>
-            <button
-              type="button"
-              class="danger"
-              data-review="rejected"
-              data-club-id="${escapeHTML(club.id)}"
-              data-request-id="${escapeHTML(request.id)}">
-              Reject
-            </button>
+            <button type="button"
+              data-member-review="approved"
+              data-request-id="${escapeHTML(request.id)}">Approve</button>
+            <button type="button" class="danger"
+              data-member-review="rejected"
+              data-request-id="${escapeHTML(request.id)}">Reject</button>
           </div>
         </div>
       `;
     }).join("");
 
-    target.querySelectorAll("[data-review]").forEach(button => {
-      button.addEventListener("click", () => {
+    target.querySelectorAll("[data-member-review]").forEach(button => {
+      button.addEventListener("click",() => {
         reviewMembershipRequest(
           club,
           button.dataset.requestId,
-          button.dataset.review,
+          button.dataset.memberReview,
           button
         );
       });
     });
 
-  } catch (error) {
-    console.error(error);
+  } catch(error) {
     target.innerHTML =
       `<p class="small">Could not load requests: ${escapeHTML(error.message)}</p>`;
   }
 }
 
-async function reviewMembershipRequest(club, requestId, decision, button) {
+async function reviewMembershipRequest(club,requestId,decision,button) {
   const actionName = decision === "approved" ? "approve" : "reject";
+  if (!confirm("Are you sure you want to " + actionName + " this membership request?")) return;
 
-  const confirmed = window.confirm(
-    `Are you sure you want to ${actionName} this membership request?`
-  );
-
-  if (!confirmed) return;
-
-  const requestCard = button.closest(".request-card");
-  const buttons = requestCard
-    ? requestCard.querySelectorAll("button")
-    : [button];
-
+  const card = button.closest(".request-card");
+  const buttons = card.querySelectorAll("button");
   buttons.forEach(item => item.disabled = true);
-  button.textContent = decision === "approved" ? "Approving..." : "Rejecting...";
 
   try {
-    const result = await callFunction("club-management", {
-      action: "review_request",
-      club_id: club.id,
-      request_id: requestId,
-      decision: decision
+    const result = await callFunction("club-management",{
+      action:"review_request",
+      club_id:club.id,
+      request_id:requestId,
+      decision
     });
 
-    showMessage(
-      result.message ||
-      (decision === "approved"
-        ? "Membership request approved."
-        : "Membership request rejected."),
-      "success"
-    );
-
+    showMessage(result.message || "Membership request updated.","success");
     await loadRequestsForClub(club);
-
-  } catch (error) {
+  } catch(error) {
     showMessage(error.message);
     buttons.forEach(item => item.disabled = false);
-    button.textContent = decision === "approved" ? "Approve" : "Reject";
   }
 }
 
-document.getElementById("createClubForm").addEventListener("submit", async event => {
+// TEAM MANAGEMENT
+
+async function createTeam(clubId,form) {
+  const name = form.elements.teamName.value.trim();
+  const description = form.elements.teamDescription.value.trim();
+  const logoUrl = form.elements.teamLogo.value.trim();
+  const button = form.querySelector('button[type="submit"]');
+
+  if (name.length < 2 || name.length > 60) {
+    showMessage("Team name must be between 2 and 60 characters.");
+    return;
+  }
+
+  button.disabled = true;
+  button.textContent = "Creating...";
+
+  try {
+    const result = await callTeamFunction({
+      action:"create_team",
+      clubId,
+      name,
+      description,
+      logoUrl
+    });
+
+    showMessage(result.message || "Team created successfully.","success");
+    form.reset();
+
+    const club = {id:clubId};
+    await loadTeamsForClub(club);
+  } catch(error) {
+    showMessage(error.message);
+  } finally {
+    button.disabled = false;
+    button.textContent = "Create Team";
+  }
+}
+
+async function loadTeamsForClub(club) {
+  const target = document.getElementById("teams-" + club.id);
+  if (!target) return;
+
+  target.innerHTML = '<p class="small">Loading teams...</p>';
+
+  try {
+    const result = await callTeamFunction({
+      action:"list_teams",
+      clubId:club.id
+    });
+
+    const teams = Array.isArray(result.teams) ? result.teams : [];
+
+    if (!teams.length) {
+      target.innerHTML =
+        '<p class="small">No teams have been created for this club yet.</p>';
+      return;
+    }
+
+    target.innerHTML = teams.map(team => {
+      const members = Array.isArray(team.members) ? team.members : [];
+      const requests = Array.isArray(team.requests) ? team.requests : [];
+      const archived = team.status === "archived";
+
+      const memberHTML = members.length
+        ? members.map(membership => {
+            const player = membership.player || {};
+            const playerName = player.display_name ||
+              player.lichess_username ||
+              ("Player " + membership.player_id);
+            const isCaptain =
+              Number(team.captain_player_id) === Number(membership.player_id);
+
+            return `
+              <div class="member-row">
+                <span class="member-name">
+                  ${escapeHTML(playerName)}
+                  ${isCaptain ? '<span class="captain-label">CAPTAIN</span>' : ""}
+                </span>
+                <span class="small">Member</span>
+              </div>
+            `;
+          }).join("")
+        : '<p class="small">No approved team members yet.</p>';
+
+      const captainOptions = members.map(membership => {
+        const player = membership.player || {};
+        const playerName = player.display_name ||
+          player.lichess_username ||
+          ("Player " + membership.player_id);
+
+        return `
+          <option value="${escapeHTML(membership.player_id)}"
+            ${Number(team.captain_player_id) === Number(membership.player_id) ? "selected" : ""}>
+            ${escapeHTML(playerName)}
+          </option>
+        `;
+      }).join("");
+
+      const requestHTML = requests.length
+        ? requests.map(request => {
+            const player = request.player || {};
+            const playerName = player.display_name ||
+              player.lichess_username ||
+              ("Player " + request.player_id);
+
+            return `
+              <div class="request-card">
+                <strong>${escapeHTML(playerName)}</strong>
+                <span class="small">Team join request</span>
+                <div class="actions">
+                  <button type="button"
+                    data-team-review="approve"
+                    data-team-id="${escapeHTML(team.id)}"
+                    data-request-id="${escapeHTML(request.id)}">Approve</button>
+                  <button type="button" class="danger"
+                    data-team-review="reject"
+                    data-team-id="${escapeHTML(team.id)}"
+                    data-request-id="${escapeHTML(request.id)}">Reject</button>
+                </div>
+              </div>
+            `;
+          }).join("")
+        : '<p class="small">No pending team requests.</p>';
+
+      return `
+        <div class="team-card ${archived ? "archived" : ""}">
+          <h4>${escapeHTML(team.name)}</h4>
+          <span class="status">${escapeHTML(team.status || "active")}</span>
+          <p class="small">${escapeHTML(team.description || "No team description.")}</p>
+
+          <div class="subsection">
+            <h5>Approved Team Members (${members.length})</h5>
+            ${memberHTML}
+          </div>
+
+          ${!archived ? `
+            <div class="subsection">
+              <h5>Appoint Team Captain</h5>
+              ${members.length ? `
+                <select data-captain-select="${escapeHTML(team.id)}">
+                  <option value="">Select an active team member</option>
+                  ${captainOptions}
+                </select>
+                <button type="button" class="secondary"
+                  data-set-captain="${escapeHTML(team.id)}">Save Captain</button>
+              ` : '<p class="small">A team must have an approved member before you can appoint a captain.</p>'}
+            </div>
+
+            <div class="subsection">
+              <h5>Pending Team Requests (${requests.length})</h5>
+              ${requestHTML}
+            </div>
+
+            <div class="actions">
+              <button type="button" class="secondary"
+                data-edit-team="${escapeHTML(team.id)}">Edit Team</button>
+              <button type="button" class="danger"
+                data-archive-team="${escapeHTML(team.id)}">Archive Team</button>
+            </div>
+          ` : `
+            <p class="small">This team is archived and is not accepting new requests.</p>
+          `}
+        </div>
+      `;
+    }).join("");
+
+    // TEAM REQUEST APPROVALS
+    target.querySelectorAll("[data-team-review]").forEach(button => {
+      button.addEventListener("click",() => {
+        reviewTeamRequest(
+          club,
+          button.dataset.requestId,
+          button.dataset.teamReview,
+          button
+        );
+      });
+    });
+
+    // EDIT TEAM
+    target.querySelectorAll("[data-edit-team]").forEach(button => {
+      button.addEventListener("click",() => {
+        const team = teams.find(item =>
+          String(item.id) === button.dataset.editTeam
+        );
+        if (team) editTeam(team,club);
+      });
+    });
+
+    // ARCHIVE TEAM
+    target.querySelectorAll("[data-archive-team]").forEach(button => {
+      button.addEventListener("click",() => {
+        const team = teams.find(item =>
+          String(item.id) === button.dataset.archiveTeam
+        );
+        if (team) archiveTeam(team,club,button);
+      });
+    });
+
+    // SET CAPTAIN
+    target.querySelectorAll("[data-set-captain]").forEach(button => {
+      button.addEventListener("click",() => {
+        setTeamCaptain(
+          button.dataset.setCaptain,
+          target.querySelector(
+            `[data-captain-select="${CSS.escape(button.dataset.setCaptain)}"]`
+          ),
+          club,
+          button
+        );
+      });
+    });
+
+  } catch(error) {
+    console.error(error);
+    target.innerHTML =
+      `<p class="small">Could not load teams: ${escapeHTML(error.message)}</p>`;
+  }
+}
+
+async function reviewTeamRequest(club,requestId,decision,button) {
+  const verb = decision === "approve" ? "approve" : "reject";
+
+  if (!confirm("Are you sure you want to " + verb + " this team request?")) return;
+
+  const card = button.closest(".request-card");
+  const buttons = card.querySelectorAll("button");
+  buttons.forEach(item => item.disabled = true);
+
+  try {
+    const result = await callTeamFunction({
+      action:"review_request",
+      requestId,
+      decision
+    });
+
+    showMessage(result.message || "Team request updated.","success");
+    await loadTeamsForClub(club);
+  } catch(error) {
+    showMessage(error.message);
+    buttons.forEach(item => item.disabled = false);
+  }
+}
+
+async function editTeam(team,club) {
+  const name = prompt("Enter the new team name:",team.name || "");
+  if (name === null) return;
+
+  const description = prompt(
+    "Enter the team description:",
+    team.description || ""
+  );
+  if (description === null) return;
+
+  const logoUrl = prompt(
+    "Enter the team logo URL (leave blank to remove it):",
+    team.logo_url || ""
+  );
+  if (logoUrl === null) return;
+
+  try {
+    const result = await callTeamFunction({
+      action:"update_team",
+      teamId:team.id,
+      name:name.trim(),
+      description:description.trim(),
+      logoUrl:logoUrl.trim()
+    });
+
+    showMessage(result.message || "Team updated successfully.","success");
+    await loadTeamsForClub(club);
+  } catch(error) {
+    showMessage(error.message);
+  }
+}
+
+async function archiveTeam(team,club,button) {
+  if (!confirm(
+    'Archive "' + team.name + '"? This will mark the team as archived.'
+  )) return;
+
+  button.disabled = true;
+
+  try {
+    const result = await callTeamFunction({
+      action:"update_team",
+      teamId:team.id,
+      status:"archived"
+    });
+
+    showMessage(result.message || "Team archived successfully.","success");
+    await loadTeamsForClub(club);
+  } catch(error) {
+    showMessage(error.message);
+    button.disabled = false;
+  }
+}
+
+async function setTeamCaptain(teamId,select,club,button) {
+  if (!select || !select.value) {
+    showMessage("Please select an active team member.");
+    return;
+  }
+
+  button.disabled = true;
+  button.textContent = "Saving...";
+
+  try {
+    const result = await callTeamFunction({
+      action:"set_captain",
+      teamId,
+      playerId:Number(select.value)
+    });
+
+    showMessage(result.message || "Team captain updated successfully.","success");
+    await loadTeamsForClub(club);
+  } catch(error) {
+    showMessage(error.message);
+  } finally {
+    button.disabled = false;
+    button.textContent = "Save Captain";
+  }
+}
+
+// CREATE CLUB
+
+document.getElementById("createClubForm").addEventListener("submit",async event => {
   event.preventDefault();
   clearMessage();
 
@@ -577,13 +950,13 @@ document.getElementById("createClubForm").addEventListener("submit", async event
   button.textContent = "Creating...";
 
   const payload = {
-    action: "create_club",
-    name: document.getElementById("clubName").value.trim(),
-    slug: makeSlug(document.getElementById("clubSlug").value),
-    description: document.getElementById("clubDescription").value.trim(),
-    country: document.getElementById("clubCountry").value.trim(),
-    city: document.getElementById("clubCity").value.trim(),
-    logo_url: document.getElementById("clubLogo").value.trim()
+    action:"create_club",
+    name:document.getElementById("clubName").value.trim(),
+    slug:makeSlug(document.getElementById("clubSlug").value),
+    description:document.getElementById("clubDescription").value.trim(),
+    country:document.getElementById("clubCountry").value.trim(),
+    city:document.getElementById("clubCity").value.trim(),
+    logo_url:document.getElementById("clubLogo").value.trim()
   };
 
   try {
@@ -591,20 +964,21 @@ document.getElementById("createClubForm").addEventListener("submit", async event
       throw new Error("Please enter a club name and URL address.");
     }
 
-    const result = await callFunction("club-management", payload);
+    const result = await callFunction("club-management",payload);
+    showMessage(result.message || "Your club has been created successfully.","success");
 
-    showMessage(result.message || "Your club has been created successfully.", "success");
     event.target.reset();
     document.getElementById("clubSlug").dataset.edited = "";
     await loadMyClubs();
-
-  } catch (error) {
+  } catch(error) {
     showMessage(error.message);
   } finally {
     button.disabled = false;
     button.textContent = "Create Club";
   }
 });
+
+// EDIT CLUB
 
 function openEditPanel(club) {
   document.getElementById("editClubId").value = club.id;
@@ -616,10 +990,10 @@ function openEditPanel(club) {
   document.getElementById("editLogo").value = club.logo_url || "";
 
   document.getElementById("editPanel").classList.remove("hidden");
-  document.getElementById("editPanel").scrollIntoView({ behavior: "smooth" });
+  document.getElementById("editPanel").scrollIntoView({behavior:"smooth"});
 }
 
-document.getElementById("editClubForm").addEventListener("submit", async event => {
+document.getElementById("editClubForm").addEventListener("submit",async event => {
   event.preventDefault();
   clearMessage();
 
@@ -628,14 +1002,14 @@ document.getElementById("editClubForm").addEventListener("submit", async event =
   button.textContent = "Saving...";
 
   const payload = {
-    action: "update_club",
-    club_id: document.getElementById("editClubId").value,
-    name: document.getElementById("editName").value.trim(),
-    slug: makeSlug(document.getElementById("editSlug").value),
-    description: document.getElementById("editDescription").value.trim(),
-    country: document.getElementById("editCountry").value.trim(),
-    city: document.getElementById("editCity").value.trim(),
-    logo_url: document.getElementById("editLogo").value.trim()
+    action:"update_club",
+    club_id:document.getElementById("editClubId").value,
+    name:document.getElementById("editName").value.trim(),
+    slug:makeSlug(document.getElementById("editSlug").value),
+    description:document.getElementById("editDescription").value.trim(),
+    country:document.getElementById("editCountry").value.trim(),
+    city:document.getElementById("editCity").value.trim(),
+    logo_url:document.getElementById("editLogo").value.trim()
   };
 
   try {
@@ -643,13 +1017,11 @@ document.getElementById("editClubForm").addEventListener("submit", async event =
       throw new Error("Club name and URL address are required.");
     }
 
-    const result = await callFunction("club-management", payload);
-
-    showMessage(result.message || "Club details updated successfully.", "success");
+    const result = await callFunction("club-management",payload);
+    showMessage(result.message || "Club details updated successfully.","success");
     document.getElementById("editPanel").classList.add("hidden");
     await loadMyClubs();
-
-  } catch (error) {
+  } catch(error) {
     showMessage(error.message);
   } finally {
     button.disabled = false;
@@ -657,13 +1029,13 @@ document.getElementById("editClubForm").addEventListener("submit", async event =
   }
 });
 
-document.getElementById("cancelEditBtn").addEventListener("click", () => {
+document.getElementById("cancelEditBtn").addEventListener("click",() => {
   document.getElementById("editPanel").classList.add("hidden");
 });
 
-document.getElementById("refreshBtn").addEventListener("click", loadMyClubs);
+document.getElementById("refreshBtn").addEventListener("click",loadMyClubs);
 
-document.getElementById("signOutBtn").addEventListener("click", () => {
+document.getElementById("signOutBtn").addEventListener("click",() => {
   localStorage.removeItem("dychess_player_session");
   localStorage.removeItem("dychess_player_session_expiry");
   localStorage.removeItem("dychess_player_username");
