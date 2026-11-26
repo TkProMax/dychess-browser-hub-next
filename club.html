@@ -831,7 +831,7 @@
           ),
           getRows(
             "club_team_matches",
-            `select=team_id,points,result&club_id=eq.${encodeURIComponent(clubId)}`
+          `select=team_id,opponent_team_id,points,result&club_id=eq.${encodeURIComponent(clubId)}`
           )
         ]);
 
