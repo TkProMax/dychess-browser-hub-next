@@ -680,6 +680,69 @@ async function loadOrganizerTournamentControls(club) {
       </div>
     `;
 
+    
+    const form = document.getElementById(
+      "createClubTournamentForm"
+    );
+
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+
+      const button = form.querySelector(
+        'button[type="submit"]'
+      );
+
+      button.disabled = true;
+      button.textContent = "Creating...";
+
+      try {
+        const result = await callClubTournaments(
+          "create_tournament",
+          {
+            clubId: club.id,
+            name: document.getElementById(
+              "clubTournamentName"
+            ).value.trim(),
+            description: document.getElementById(
+              "clubTournamentDescription"
+            ).value.trim(),
+            tournamentDate: document.getElementById(
+              "clubTournamentDate"
+            ).value || null,
+            tournamentTime: document.getElementById(
+              "clubTournamentTime"
+            ).value || null,
+            timeControl: document.getElementById(
+              "clubTournamentTimeControl"
+            ).value,
+            numberOfRounds: Number(
+              document.getElementById(
+                "clubTournamentRounds"
+              ).value
+            ),
+            maxPlayers: document.getElementById(
+              "clubTournamentMaxPlayers"
+            ).value
+              ? Number(document.getElementById(
+                  "clubTournamentMaxPlayers"
+                ).value)
+              : null
+          }
+        );
+
+        alert(result.message || "Tournament created successfully.");
+
+        form.reset();
+        await loadTournaments(club.id);
+
+      } catch (error) {
+        alert(error.message || "Tournament creation failed.");
+      } finally {
+        button.disabled = false;
+        button.textContent = "Create Tournament";
+      }
+    });
+
   } catch (error) {
     console.error("Organizer controls could not load:", error);
   }
