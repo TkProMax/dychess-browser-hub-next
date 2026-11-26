@@ -923,6 +923,167 @@
       }
     }
 
+    
+async function loadPlayerStatistics(clubId) {
+  const target = document.getElementById("playerStatistics");
+
+  try {
+    const [teams, memberships, matches] = await Promise.all([
+      getRows(
+        "club_teams",
+        `select=id,name&club_id=eq.${encodeURIComponent(clubId)}`
+      ),
+      getRows(
+        "club_team_memberships",
+        `select=team_id,player_id&club_id=eq.${encodeURIComponent(clubId)}&status=eq.active`
+      ),
+      getRows(
+        "club_team_matches",
+        `select=team_id,opponent_team_id,player_id,points,result&club_id=eq.${encodeURIComponent(clubId)}`
+      )
+    ]);
+
+    const teamMap = new Map(
+      teams.map(team => [String(team.id), team.name])
+    );
+
+    const statistics = new Map();
+
+    // Include active team members, even if they have not played.
+    memberships.forEach(member => {
+      const key = String(member.player_id);
+
+      if (!statistics.has(key)) {
+        statistics.set(key, {
+          playerId: member.player_id,
+          teamId: member.team_id,
+          played: 0,
+          wins: 0,
+          draws: 0,
+          losses: 0,
+          points: 0
+        });
+      }
+    });
+
+    // Add recorded results, excluding same-team matches.
+    matches.forEach(match => {
+      if (
+        !match.opponent_team_id ||
+        String(match.team_id) === String(match.opponent_team_id)
+      ) {
+        return;
+      }
+
+      const key = String(match.player_id);
+
+      if (!statistics.has(key)) {
+        statistics.set(key, {
+          playerId: match.player_id,
+          teamId: match.team_id,
+          played: 0,
+          wins: 0,
+          draws: 0,
+          losses: 0,
+          points: 0
+        });
+      }
+
+      const player = statistics.get(key);
+
+      player.played += 1;
+      player.points += Number(match.points) || 0;
+
+      if (match.result === "win") {
+        player.wins += 1;
+      } else if (match.result === "draw") {
+        player.draws += 1;
+      } else if (match.result === "loss") {
+        player.losses += 1;
+      }
+    });
+
+    if (!statistics.size) {
+      target.innerHTML =
+        '<p class="empty">No team players or recorded player statistics yet.</p>';
+      return;
+    }
+
+    const playerIds = [
+      ...new Set(
+        Array.from(statistics.values()).map(player => player.playerId)
+      )
+    ];
+
+    const players = await getRows(
+      "players",
+      `select=id,display_name,lichess_username&id=in.(${playerIds.join(",")})`
+    );
+
+    const playerMap = new Map(
+      players.map(player => [String(player.id), player])
+    );
+
+    const rankedPlayers = Array.from(statistics.values()).map(player => {
+      const profile = playerMap.get(String(player.playerId));
+
+      return {
+        ...player,
+        name: profile
+          ? (profile.display_name || profile.lichess_username)
+          : `Player ${player.playerId}`,
+        teamName: teamMap.get(String(player.teamId)) || "Former team"
+      };
+    }).sort((a, b) => {
+      if (b.points !== a.points) return b.points - a.points;
+      if (b.wins !== a.wins) return b.wins - a.wins;
+      return a.name.localeCompare(b.name);
+    });
+
+    target.innerHTML = `
+      <div class="leaderboard-wrap">
+        <table class="leaderboard">
+          <thead>
+            <tr>
+              <th>Rank</th>
+              <th style="text-align:left;">Player</th>
+              <th style="text-align:left;">Team</th>
+              <th>Played</th>
+              <th>Wins</th>
+              <th>Draws</th>
+              <th>Losses</th>
+              <th>Points</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rankedPlayers.map((player, index) => `
+              <tr>
+                <td class="rank">${index + 1}</td>
+                <td class="team-name">${escapeHTML(player.name)}</td>
+                <td>${escapeHTML(player.teamName)}</td>
+                <td>${player.played}</td>
+                <td>${player.wins}</td>
+                <td>${player.draws}</td>
+                <td>${player.losses}</td>
+                <td class="points">${player.points}</td>
+              </tr>
+            `).join("")}
+          </tbody>
+        </table>
+      </div>
+      <p class="muted">
+        Players are ranked by total points, then wins. Only matches between different teams count.
+      </p>
+    `;
+
+  } catch (error) {
+    console.error("Could not load player statistics:", error);
+    target.innerHTML =
+      '<p class="empty">Player statistics are currently unavailable. Please refresh the page and try again.</p>';
+  }
+}
+
+
     async function loadTournaments(clubId) {
       const target = document.getElementById("tournaments");
 
