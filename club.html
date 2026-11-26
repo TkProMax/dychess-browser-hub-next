@@ -351,6 +351,48 @@
       return data;
     }
 
+    async function callClubTournaments(action, extra = {}) {
+  const session = localStorage.getItem("dychess_player_session");
+
+  if (!session) {
+    loginToJoin();
+    throw new Error("Please sign in to continue.");
+  }
+
+  const response = await fetch(
+    `${SUPABASE_URL}/functions/v1/club-tournaments`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "apikey": SUPABASE_KEY,
+        "Authorization": "Bearer " + SUPABASE_KEY,
+        "x-dychess-session": session
+      },
+      body: JSON.stringify({
+        action,
+        ...extra
+      })
+    }
+  );
+
+  let data = {};
+
+  try {
+    data = await response.json();
+  } catch (_) {
+    data = {};
+  }
+
+  if (!response.ok || data.success === false) {
+    throw new Error(
+      data.error || data.message ||
+      "The tournament request could not be completed."
+    );
+  }
+
+  return data;
+}
     async function requestToJoin() {
       const button = document.getElementById("joinButton");
       const message = document.getElementById("joinMessage");
