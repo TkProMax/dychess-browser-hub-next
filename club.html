@@ -624,17 +624,29 @@
           </section>
 
           <section class="section">
+  <h2>Player Statistics</h2>
+  <p class="muted">
+    Individual player performance across this club, based on recorded matches.
+  </p>
+  <div id="playerStatistics">
+    <p class="empty">Loading player statistics...</p>
+  </div>
+</section>
+
+
+          <section class="section">
             <h2>Club Tournaments</h2>
             <div id="tournaments"><p class="empty">Loading tournaments...</p></div>
           </section>
         `;
 
-        await Promise.all([
-          loadMembers(club.id),
-          loadTeams(club.id),
-          loadTeamLeaderboard(club.id),
-          loadTournaments(club.id)
-        ]);
+      await Promise.all([
+  loadMembers(club.id),
+  loadTeams(club.id),
+  loadTeamLeaderboard(club.id),
+  loadPlayerStatistics(club.id),
+  loadTournaments(club.id)
+]);
 
       } catch (error) {
         console.error(error);
