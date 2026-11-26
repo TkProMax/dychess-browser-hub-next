@@ -109,6 +109,12 @@
       margin-top: 0;
     }
 
+    h3 {
+      color: var(--gold);
+      font-size: 16px;
+      margin-top: 24px;
+    }
+
     .muted {
       color: var(--muted);
       line-height: 1.6;
@@ -210,6 +216,63 @@
       border-radius: 8px;
     }
 
+    button {
+      background: var(--gold);
+      color: #07140e;
+      border: 0;
+      border-radius: 7px;
+      padding: 10px 15px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    button:hover { opacity: .9; }
+
+    button:disabled {
+      opacity: .55;
+      cursor: not-allowed;
+    }
+
+    button.danger {
+      background: #8e3838;
+      color: white;
+    }
+
+    .match-form {
+      display: grid;
+      gap: 15px;
+      margin-top: 18px;
+    }
+
+    .match-field {
+      display: grid;
+      gap: 7px;
+    }
+
+    .match-field label {
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .match-field select {
+      width: 100%;
+      padding: 13px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: #07140e;
+      color: var(--text);
+      font-size: 15px;
+    }
+
+    .match-message {
+      margin-top: 15px;
+      line-height: 1.6;
+      color: var(--muted);
+    }
+
+    .match-message.success { color: #9bd88b; }
+    .match-message.failure { color: #ffb0a8; }
+
     @media (max-width: 550px) {
       .stats { grid-template-columns: 1fr; }
       .hero, .section { padding: 18px; }
@@ -230,7 +293,6 @@
     </div>
   </main>
 
- 
 <script>
   const SUPABASE_URL =
     "https://rpfowuqlhboslhmvjelc.supabase.co";
@@ -532,159 +594,303 @@
   }
 
 
-async function loadCaptainManagement(team) {
-  const panel = document.getElementById("captainManagement");
+  // Load management controls and the match-recording form.
+  async function loadCaptainManagement(team) {
+    const panel = document.getElementById("captainManagement");
 
-  if (!panel) return;
+    if (!panel) return;
 
-  const session = localStorage.getItem("dychess_player_session");
+    const session = localStorage.getItem("dychess_player_session");
 
-  if (!session) return;
+    if (!session) return;
 
-  try {
-    const result = await callTeamFunction({
-      action: "list_teams",
-      clubId: team.club_id
-    });
+    try {
+      const result = await callTeamFunction({
+        action: "list_teams",
+        clubId: team.club_id
+      });
 
-    const authorizedTeam = (result.teams || []).find(
-      item => String(item.id) === String(team.id)
-    );
+      const authorizedTeam = (result.teams || []).find(
+        item => String(item.id) === String(team.id)
+      );
 
-    if (!authorizedTeam) return;
+      if (!authorizedTeam) return;
 
-    const requests = Array.isArray(authorizedTeam.requests)
-      ? authorizedTeam.requests
-      : [];
+      const requests = Array.isArray(authorizedTeam.requests)
+        ? authorizedTeam.requests
+        : [];
 
-    const members = Array.isArray(authorizedTeam.members)
-      ? authorizedTeam.members
-      : [];
+      const members = Array.isArray(authorizedTeam.members)
+        ? authorizedTeam.members
+        : [];
 
-    const memberHTML = members.length
-      ? members.map(member => {
-          const player = member.player || {};
+      const memberHTML = members.length
+        ? members.map(member => {
+            const player = member.player || {};
 
-          const playerName =
-            player.display_name ||
-            player.lichess_username ||
-            ("Player " + member.player_id);
+            const playerName =
+              player.display_name ||
+              player.lichess_username ||
+              ("Player " + member.player_id);
 
-          const isCaptain =
-            Number(team.captain_player_id) ===
-            Number(member.player_id);
+            const isCaptain =
+              Number(team.captain_player_id) ===
+              Number(member.player_id);
 
-          return `
-            <div class="member" style="
-              display:flex;
-              flex-wrap:wrap;
-              align-items:center;
-              justify-content:space-between;
-              gap:12px;
-              padding:14px 0;
-              border-bottom:1px solid rgba(255,255,255,.1);
-            ">
-              <div>
-                <strong>${escapeHTML(playerName)}</strong>
-                ${isCaptain
-                  ? `<span class="captain-tag">♛ Captain</span>`
-                  : ""}
+            return `
+              <div class="member" style="
+                display:flex;
+                flex-wrap:wrap;
+                align-items:center;
+                justify-content:space-between;
+                gap:12px;
+                padding:14px 0;
+                border-bottom:1px solid rgba(255,255,255,.1);
+              ">
+                <div>
+                  <strong>${escapeHTML(playerName)}</strong>
+                  ${isCaptain
+                    ? `<span class="captain-tag">♛ Captain</span>`
+                    : ""}
+                </div>
+
+                ${!isCaptain ? `
+                  <button
+                    type="button"
+                    class="danger"
+                    data-remove-member="${escapeHTML(member.id)}">
+                    Remove Member
+                  </button>
+                ` : ""}
               </div>
+            `;
+          }).join("")
+        : `<p class="empty">No approved team members yet.</p>`;
 
-              ${!isCaptain ? `
-                <button
-                  type="button"
-                  class="danger"
-                  data-remove-member="${escapeHTML(member.id)}"
-                  style="cursor:pointer;padding:9px 14px;">
-                  Remove Member
-                </button>
-              ` : ""}
-            </div>
-          `;
-        }).join("")
-      : `<p class="empty">No approved team members yet.</p>`;
+      const requestHTML = requests.length
+        ? requests.map(request => {
+            const player = request.player || {};
 
-    const requestHTML = requests.length
-      ? requests.map(request => {
-          const player = request.player || {};
+            const playerName =
+              player.display_name ||
+              player.lichess_username ||
+              ("Player " + request.player_id);
 
-          const playerName =
-            player.display_name ||
-            player.lichess_username ||
-            ("Player " + request.player_id);
+            return `
+              <div class="member" style="
+                display:flex;
+                flex-wrap:wrap;
+                align-items:center;
+                justify-content:space-between;
+                gap:12px;
+                padding:14px 0;
+                border-bottom:1px solid rgba(255,255,255,.1);
+              ">
+                <div>
+                  <strong>${escapeHTML(playerName)}</strong>
+                  <p class="muted">Team join request</p>
+                </div>
 
-          return `
-            <div class="member" style="
-              display:flex;
-              flex-wrap:wrap;
-              align-items:center;
-              justify-content:space-between;
-              gap:12px;
-              padding:14px 0;
-              border-bottom:1px solid rgba(255,255,255,.1);
-            ">
-              <div>
-                <strong>${escapeHTML(playerName)}</strong>
-                <p class="muted">Team join request</p>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                  <button
+                    type="button"
+                    data-team-review="approve"
+                    data-request-id="${escapeHTML(request.id)}">
+                    Approve
+                  </button>
+
+                  <button
+                    type="button"
+                    class="danger"
+                    data-team-review="reject"
+                    data-request-id="${escapeHTML(request.id)}">
+                    Reject
+                  </button>
+                </div>
               </div>
+            `;
+          }).join("")
+        : `<p class="empty">There are no pending requests for this team.</p>`;
 
-              <div style="display:flex;gap:8px;flex-wrap:wrap;">
-                <button
-                  type="button"
-                  data-team-review="approve"
-                  data-request-id="${escapeHTML(request.id)}">
-                  Approve
-                </button>
+      panel.innerHTML = `
+        <section class="section">
+          <h2>Team Management</h2>
 
-                <button
-                  type="button"
-                  class="danger"
-                  data-team-review="reject"
-                  data-request-id="${escapeHTML(request.id)}">
-                  Reject
-                </button>
-              </div>
-            </div>
-          `;
-        }).join("")
-      : `<p class="empty">There are no pending requests for this team.</p>`;
+          <p class="muted">
+            Manage members and review requests for this team.
+          </p>
 
-    panel.innerHTML = `
-      <section class="section">
-        <h2>Team Management</h2>
+          <h3>Approved Team Members (${members.length})</h3>
 
-        <p class="muted">
-          Manage members and review requests for this team.
-        </p>
+          <div id="managedTeamMembers">
+            ${memberHTML}
+          </div>
 
-        <h3>Approved Team Members (${members.length})</h3>
+          <h3>Pending Join Requests (${requests.length})</h3>
 
-        <div id="managedTeamMembers">
-          ${memberHTML}
-        </div>
+          <div id="teamRequestList">
+            ${requestHTML}
+          </div>
 
-        <h3>Pending Join Requests (${requests.length})</h3>
+          <p id="teamManagementMessage"
+             class="muted"
+             aria-live="polite"></p>
+        </section>
+      `;
 
-        <div id="teamRequestList">
-          ${requestHTML}
-        </div>
+      // Add the match-recording section for authorized users.
+      await loadMatchRecording(team, panel);
 
-        <p id="teamManagementMessage"
-           class="muted"
-           aria-live="polite"></p>
-      </section>
-    `;
-
-  } catch (error) {
-    if (
-      error.message !== "CAPTAIN_ACCESS_REQUIRED" &&
-      error.message !== "PLAYER_NOT_SIGNED_IN"
-    ) {
-      console.error("Team management:", error);
+    } catch (error) {
+      if (
+        error.message !== "CAPTAIN_ACCESS_REQUIRED" &&
+        error.message !== "PLAYER_NOT_SIGNED_IN"
+      ) {
+        console.error("Team management:", error);
+      }
     }
   }
-}
+
+
+  // Load all active teams and their active players in this club.
+  async function loadMatchRecording(team, panel) {
+    try {
+      const teams = await getRows(
+        "club_teams",
+        `select=id,name&club_id=eq.${encodeURIComponent(team.club_id)}&status=eq.active&order=name.asc`
+      );
+
+      if (!teams.length) return;
+
+      const teamIds = teams.map(item => item.id);
+
+      const memberships = await getRows(
+        "club_team_memberships",
+        `select=id,team_id,player_id&team_id=in.(${teamIds.join(",")})&status=eq.active`
+      );
+
+      const playerIds = [
+        ...new Set(memberships.map(item => Number(item.player_id)))
+      ];
+
+      if (!playerIds.length) {
+        panel.insertAdjacentHTML("beforeend", `
+          <section class="section">
+            <h2>Record Match Result</h2>
+            <p class="empty">
+              There are no active team members available for match recording yet.
+            </p>
+          </section>
+        `);
+        return;
+      }
+
+      const players = await getRows(
+        "players",
+        `select=id,display_name,lichess_username&id=in.(${playerIds.join(",")})`
+      );
+
+      const playerMap = new Map(
+        players.map(player => [
+          String(player.id),
+          player.display_name || player.lichess_username || `Player ${player.id}`
+        ])
+      );
+
+      const teamMap = new Map(
+        teams.map(item => [String(item.id), item.name])
+      );
+
+      const activePlayers = memberships
+        .map(membership => ({
+          playerId: Number(membership.player_id),
+          teamId: String(membership.team_id),
+          teamName: teamMap.get(String(membership.team_id)) || "Team",
+          playerName:
+            playerMap.get(String(membership.player_id)) ||
+            `Player ${membership.player_id}`
+        }))
+        .sort((a, b) => {
+          const teamCompare = a.teamName.localeCompare(b.teamName);
+          return teamCompare || a.playerName.localeCompare(b.playerName);
+        });
+
+      const playerOptions = activePlayers.map(player => `
+        <option
+          value="${escapeHTML(player.playerId)}"
+          data-team-id="${escapeHTML(player.teamId)}">
+          ${escapeHTML(player.playerName)} — ${escapeHTML(player.teamName)}
+        </option>
+      `).join("");
+
+      panel.insertAdjacentHTML("beforeend", `
+        <section class="section">
+          <h2>Record Match Result</h2>
+
+          <p class="muted">
+            Record a match between two active players in this club.
+            DYCHESS will automatically update both players' results and points.
+          </p>
+
+          <p class="muted">
+            A captain must record a match involving a player from their own team.
+            The club organizer can record matches involving any two active players
+            in the club.
+          </p>
+
+          <form id="recordMatchForm" class="match-form">
+
+            <div class="match-field">
+              <label for="matchPlayer1">Player 1</label>
+              <select id="matchPlayer1" required>
+                <option value="">Select Player 1</option>
+                ${playerOptions}
+              </select>
+            </div>
+
+            <div class="match-field">
+              <label for="matchPlayer2">Player 2</label>
+              <select id="matchPlayer2" required>
+                <option value="">Select Player 2</option>
+                ${playerOptions}
+              </select>
+            </div>
+
+            <div class="match-field">
+              <label for="matchResult">Match result (from Player 1's perspective)</label>
+              <select id="matchResult" required>
+                <option value="">Select match result</option>
+                <option value="win">Player 1 won</option>
+                <option value="draw">Draw</option>
+                <option value="loss">Player 2 won</option>
+              </select>
+            </div>
+
+            <button type="submit" id="recordMatchButton">
+              Record Match Result
+            </button>
+          </form>
+
+          <p id="matchRecordingMessage"
+             class="match-message"
+             aria-live="polite"></p>
+        </section>
+      `);
+
+    } catch (error) {
+      console.error("Could not load match-recording players:", error);
+
+      panel.insertAdjacentHTML("beforeend", `
+        <section class="section">
+          <h2>Record Match Result</h2>
+          <p class="muted">
+            The match-recording form could not load the club's active players.
+            Please refresh the page and try again.
+          </p>
+        </section>
+      `);
+    }
+  }
 
 
   // Handle captain approval and rejection actions.
@@ -739,6 +945,7 @@ async function loadCaptainManagement(team) {
     }
   });
 
+
   // Handle removal of an existing team member.
   content.addEventListener("click", async event => {
     const button = event.target.closest("[data-remove-member]");
@@ -785,6 +992,92 @@ async function loadCaptainManagement(team) {
       button.textContent = "Remove Member";
     }
   });
+
+
+  // Handle match recording.
+  content.addEventListener("submit", async event => {
+    if (event.target.id !== "recordMatchForm") return;
+
+    event.preventDefault();
+
+    const form = event.target;
+    const player1Id = Number(
+      document.getElementById("matchPlayer1").value
+    );
+    const player2Id = Number(
+      document.getElementById("matchPlayer2").value
+    );
+    const result = document.getElementById("matchResult").value;
+
+    const button = document.getElementById("recordMatchButton");
+    const message = document.getElementById("matchRecordingMessage");
+
+    if (!player1Id || !player2Id || !result) {
+      message.textContent = "Please complete all match details.";
+      message.className = "match-message failure";
+      return;
+    }
+
+    if (player1Id === player2Id) {
+      message.textContent = "A player cannot play against themselves.";
+      message.className = "match-message failure";
+      return;
+    }
+
+    const confirmed = confirm(
+      "Please confirm that the selected players and match result are correct. This will record the result for both players."
+    );
+
+    if (!confirmed) return;
+
+    button.disabled = true;
+    button.textContent = "Recording...";
+    message.textContent = "Recording match result...";
+    message.className = "match-message";
+
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const teamId = params.get("id");
+
+      const teamRows = await getRows(
+        "club_teams",
+        `select=club_id&id=eq.${encodeURIComponent(teamId)}&limit=1`
+      );
+
+      if (!teamRows.length) {
+        throw new Error("TEAM_NOT_FOUND");
+      }
+
+      const response = await callTeamFunction({
+        action: "record_match",
+        clubId: teamRows[0].club_id,
+        player1Id,
+        player2Id,
+        result
+      });
+
+      message.textContent =
+        response.message ||
+        "Match result recorded successfully. Both players' records have been updated.";
+
+      message.className = "match-message success";
+
+      form.reset();
+
+    } catch (error) {
+      console.error("Match recording error:", error);
+
+      message.textContent =
+        error.message || "Unable to record this match.";
+
+      message.className = "match-message failure";
+
+    } finally {
+      button.disabled = false;
+      button.textContent = "Record Match Result";
+    }
+  });
+
 
   loadTeam();
 </script>
