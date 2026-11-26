@@ -197,6 +197,54 @@
       padding: 45px 10px;
     }
 
+    .leaderboard-wrap {
+      width: 100%;
+      overflow-x: auto;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+
+    .leaderboard {
+      width: 100%;
+      min-width: 590px;
+      border-collapse: collapse;
+      text-align: center;
+    }
+
+    .leaderboard th,
+    .leaderboard td {
+      padding: 13px 10px;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+      font-size: 13px;
+    }
+
+    .leaderboard th {
+      color: var(--gold);
+      background: rgba(0,0,0,.25);
+      font-weight: 700;
+    }
+
+    .leaderboard tbody tr:last-child td {
+      border-bottom: 0;
+    }
+
+    .leaderboard td.team-name {
+      text-align: left;
+      font-weight: 700;
+    }
+
+    .leaderboard td.points {
+      color: var(--gold);
+      font-weight: 800;
+      font-size: 15px;
+    }
+
+    .leaderboard .rank {
+      color: var(--gold);
+      font-weight: 800;
+    }
+
     @media (max-width: 550px) {
       .stats { grid-template-columns: 1fr; }
       .hero, .section { padding: 18px; }
@@ -566,6 +614,16 @@
           </section>
 
           <section class="section">
+            <h2>Team Leaderboard</h2>
+            <p class="muted">
+              Team standings are calculated from recorded match results. Teams earn 3 points for a win, 1 for a draw and 0 for a loss.
+            </p>
+            <div id="teamLeaderboard">
+              <p class="empty">Loading team standings...</p>
+            </div>
+          </section>
+
+          <section class="section">
             <h2>Club Tournaments</h2>
             <div id="tournaments"><p class="empty">Loading tournaments...</p></div>
           </section>
@@ -574,6 +632,7 @@
         await Promise.all([
           loadMembers(club.id),
           loadTeams(club.id),
+          loadTeamLeaderboard(club.id),
           loadTournaments(club.id)
         ]);
 
@@ -732,11 +791,11 @@
 
           return `
             <div class="item">
-             <strong>
-  <a href="team.html?id=${encodeURIComponent(team.id)}">
-    ${escapeHTML(team.name)}
-  </a>
-</strong>
+              <strong>
+                <a href="team.html?id=${encodeURIComponent(team.id)}">
+                  ${escapeHTML(team.name)}
+                </a>
+              </strong>
               <span class="muted">${escapeHTML(team.description || "Club team")}</span>
               ${controls}
             </div>`;
@@ -746,6 +805,109 @@
         console.error(error);
         document.getElementById("teamCount").textContent = "—";
         target.innerHTML = '<p class="empty">Team information is currently unavailable.</p>';
+      }
+    }
+
+    async function loadTeamLeaderboard(clubId) {
+      const target = document.getElementById("teamLeaderboard");
+
+      try {
+        const [teams, matches] = await Promise.all([
+          getRows(
+            "club_teams",
+            `select=id,name&club_id=eq.${encodeURIComponent(clubId)}&status=eq.active`
+          ),
+          getRows(
+            "club_team_matches",
+            `select=team_id,points,result&club_id=eq.${encodeURIComponent(clubId)}`
+          )
+        ]);
+
+        if (!teams.length) {
+          target.innerHTML =
+            '<p class="empty">There are no active teams to rank yet.</p>';
+          return;
+        }
+
+        const standings = new Map();
+
+        teams.forEach(team => {
+          standings.set(String(team.id), {
+            id: team.id,
+            name: team.name,
+            played: 0,
+            wins: 0,
+            draws: 0,
+            losses: 0,
+            points: 0
+          });
+        });
+
+        matches.forEach(match => {
+          const team = standings.get(String(match.team_id));
+
+          if (!team) return;
+
+          team.played += 1;
+          team.points += Number(match.points) || 0;
+
+          if (match.result === "win") {
+            team.wins += 1;
+          } else if (match.result === "draw") {
+            team.draws += 1;
+          } else if (match.result === "loss") {
+            team.losses += 1;
+          }
+        });
+
+        const rankedTeams = Array.from(standings.values()).sort((a, b) => {
+          if (b.points !== a.points) return b.points - a.points;
+          if (b.wins !== a.wins) return b.wins - a.wins;
+          return a.name.localeCompare(b.name);
+        });
+
+        target.innerHTML = `
+          <div class="leaderboard-wrap">
+            <table class="leaderboard">
+              <thead>
+                <tr>
+                  <th>Rank</th>
+                  <th style="text-align:left;">Team</th>
+                  <th>Played</th>
+                  <th>Wins</th>
+                  <th>Draws</th>
+                  <th>Losses</th>
+                  <th>Points</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${rankedTeams.map((team, index) => `
+                  <tr>
+                    <td class="rank">${index + 1}</td>
+                    <td class="team-name">
+                      <a href="team.html?id=${encodeURIComponent(team.id)}">
+                        ${escapeHTML(team.name)}
+                      </a>
+                    </td>
+                    <td>${team.played}</td>
+                    <td>${team.wins}</td>
+                    <td>${team.draws}</td>
+                    <td>${team.losses}</td>
+                    <td class="points">${team.points}</td>
+                  </tr>
+                `).join("")}
+              </tbody>
+            </table>
+          </div>
+          <p class="muted">
+            Rankings are ordered by total points, then number of wins.
+          </p>
+        `;
+
+      } catch (error) {
+        console.error("Could not load team leaderboard:", error);
+        target.innerHTML =
+          '<p class="empty">Team standings are currently unavailable. Please refresh the page and try again.</p>';
       }
     }
 
