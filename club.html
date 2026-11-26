@@ -716,11 +716,16 @@ async function callClubOrganizerStatus() {
 
 
           <section class="section">
-            <h2>Club Tournaments</h2>
-            <div id="tournaments"><p class="empty">Loading tournaments...</p></div>
-          </section>
-        `;
+  <h2>Club Tournaments</h2>
 
+  <div id="organizerTournamentControls"></div>
+
+  <div id="tournaments">
+    <p class="empty">Loading tournaments...</p>
+  </div>
+</section>
+        `;
+        await loadOrganizerTournamentControls(club);
       await Promise.all([
   loadMembers(club.id),
   loadTeams(club.id),
