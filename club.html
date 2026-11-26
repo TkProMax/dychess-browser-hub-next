@@ -625,7 +625,7 @@ async function callClubOrganizerStatus() {
       try {
         const clubs = await getRows(
           "clubs",
-          `select=id,name,slug,description,logo_url,country,city,status&slug=eq.${encodeURIComponent(slug)}&status=eq.active&limit=1`
+     `select=id,organizer_id,name,slug,description,logo_url,country,city,status&slug=eq.${encodeURIComponent(slug)}&status=eq.active&limit=1`
         );
 
         if (!clubs.length) {
