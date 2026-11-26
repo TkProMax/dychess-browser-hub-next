@@ -609,6 +609,82 @@ async function callClubOrganizerStatus() {
       }
     }
 
+async function loadOrganizerTournamentControls(club) {
+  const container = document.getElementById(
+    "organizerTournamentControls"
+  );
+
+  if (!container) return;
+
+  container.innerHTML = "";
+
+  try {
+    const organizer = await callClubOrganizerStatus();
+
+    if (
+      !organizer ||
+      String(organizer.id) !== String(club.organizer_id)
+    ) {
+      return;
+    }
+
+    container.innerHTML = `
+      <div class="item">
+        <h3>Create a Club Tournament</h3>
+        <p class="muted">
+          Set up a Swiss tournament for your club.
+        </p>
+
+        <form id="createClubTournamentForm">
+          <label for="clubTournamentName">Tournament name</label>
+          <input id="clubTournamentName" type="text"
+            minlength="3" maxlength="100" required>
+
+          <label for="clubTournamentDescription">Description</label>
+          <textarea id="clubTournamentDescription"
+            maxlength="1000"></textarea>
+
+          <label for="clubTournamentDate">Tournament date</label>
+          <input id="clubTournamentDate" type="date">
+
+          <label for="clubTournamentTime">Tournament time</label>
+          <input id="clubTournamentTime" type="time">
+
+          <label for="clubTournamentTimeControl">Time control</label>
+          <select id="clubTournamentTimeControl" required>
+            <option value="1+0">1+0 Bullet</option>
+            <option value="2+1">2+1 Bullet</option>
+            <option value="3+0">3+0 Blitz</option>
+            <option value="3+2">3+2 Blitz</option>
+            <option value="5+0" selected>5+0 Blitz</option>
+            <option value="5+3">5+3 Blitz</option>
+            <option value="10+0">10+0 Rapid</option>
+            <option value="10+5">10+5 Rapid</option>
+            <option value="15+10">15+10 Rapid</option>
+            <option value="30+0">30+0 Classical</option>
+            <option value="30+20">30+20 Classical</option>
+          </select>
+
+          <label for="clubTournamentRounds">Number of rounds</label>
+          <input id="clubTournamentRounds" type="number"
+            min="1" max="20" value="5" required>
+
+          <label for="clubTournamentMaxPlayers">Maximum players</label>
+          <input id="clubTournamentMaxPlayers" type="number"
+            min="2" max="500" value="16">
+
+          <button type="submit" class="join-button">
+            Create Tournament
+          </button>
+        </form>
+      </div>
+    `;
+
+  } catch (error) {
+    console.error("Organizer controls could not load:", error);
+  }
+}
+
     async function loadClub() {
       const slug = new URLSearchParams(window.location.search).get("slug");
 
