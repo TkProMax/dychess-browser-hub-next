@@ -732,7 +732,11 @@
 
           return `
             <div class="item">
-              <strong>${escapeHTML(team.name)}</strong>
+             <strong>
+  <a href="team.html?id=${encodeURIComponent(team.id)}">
+    ${escapeHTML(team.name)}
+  </a>
+</strong>
               <span class="muted">${escapeHTML(team.description || "Club team")}</span>
               ${controls}
             </div>`;
