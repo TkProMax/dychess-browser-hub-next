@@ -1090,39 +1090,111 @@ async function loadPlayerStatistics(clubId) {
 }
 
 
-    async function loadTournaments(clubId) {
-      const target = document.getElementById("tournaments");
+ 
+async function loadTournaments(clubId) {
+  const target = document.getElementById("tournaments");
 
-      try {
-        const tournaments = await getRows(
-          "tournaments",
-          `select=id,name,tournament_date,time_control&club_id=eq.${clubId}&order=tournament_date.desc`
-        );
+  try {
+    const data = await callClubTournaments("list_tournaments", {
+      clubId
+    });
 
-        document.getElementById("tournamentCount").textContent = tournaments.length;
+    const tournaments = data.tournaments || [];
 
-        target.innerHTML = tournaments.length
-          ? tournaments.map(tournament => `
-              <div class="item">
-                <strong>${escapeHTML(tournament.name || "Club Tournament")}</strong>
-                <span class="muted">
-                  ${tournament.tournament_date
-                    ? escapeHTML(new Date(tournament.tournament_date).toLocaleDateString())
-                    : "Date not announced"}
-                  ${tournament.time_control
-                    ? " · " + escapeHTML(tournament.time_control)
-                    : ""}
-                </span>
-              </div>`).join("")
-          : '<p class="empty">No club tournaments have been listed yet.</p>';
+    document.getElementById("tournamentCount").textContent =
+      tournaments.length;
 
-      } catch (error) {
-        console.error(error);
-        document.getElementById("tournamentCount").textContent = "—";
-        target.innerHTML = '<p class="empty">Tournament information is currently unavailable.</p>';
-      }
-    }
+    target.innerHTML = tournaments.length
+      ? tournaments.map(tournament => {
+          const statusLabels = {
+            draft: "Draft",
+            registration_open: "Registration Open",
+            registration_closed: "Registration Closed",
+            in_progress: "In Progress",
+            completed: "Completed",
+            cancelled: "Cancelled"
+          };
 
+          const status = statusLabels[tournament.status] ||
+            tournament.status;
+
+          const canRegister =
+            tournament.status === "registration_open";
+
+          return `
+            <div class="item">
+              <strong>${escapeHTML(tournament.name || "Club Tournament")}</strong>
+
+              <span class="muted">
+                ${tournament.tournament_date
+                  ? escapeHTML(new Date(
+                      tournament.tournament_date + "T00:00:00"
+                    ).toLocaleDateString())
+                  : "Date not announced"}
+                ${tournament.time_control
+                  ? " · " + escapeHTML(tournament.time_control)
+                  : ""}
+                · ${escapeHTML(status)}
+              </span>
+
+              ${tournament.description
+                ? `<p>${escapeHTML(tournament.description)}</p>`
+                : ""}
+
+              ${tournament.max_players
+                ? `<p class="muted">Maximum players: ${tournament.max_players}</p>`
+                : ""}
+
+              ${canRegister
+                ? `<button class="btn" onclick="registerForClubTournament('${tournament.id}')">
+                    Register for Tournament
+                   </button>`
+                : ""}
+            </div>
+          `;
+        }).join("")
+      : '<p class="empty">No club tournaments have been listed yet.</p>';
+
+  } catch (error) {
+    console.error("Club tournaments:", error);
+
+    document.getElementById("tournamentCount").textContent = "—";
+
+    target.innerHTML = `
+      <p class="empty">
+        ${escapeHTML(error.message || "Tournament information is currently unavailable.")}
+      </p>
+    `;
+  }
+}
+
+  async function registerForClubTournament(tournamentId) {
+  const confirmed = confirm(
+    "Submit your registration request for this tournament?"
+  );
+
+  if (!confirmed) return;
+
+  try {
+    const data = await callClubTournaments(
+      "register_for_tournament",
+      { tournamentId }
+    );
+
+    alert(
+      data.message ||
+      "Registration request submitted successfully."
+    );
+
+    location.reload();
+
+  } catch (error) {
+    alert(
+      error.message ||
+      "Could not submit your registration request."
+    );
+  }
+}
     loadClub();
   </script>
 </body>
