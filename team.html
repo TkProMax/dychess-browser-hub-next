@@ -531,108 +531,161 @@
     await loadCaptainManagement(team);
   }
 
-  async function loadCaptainManagement(team) {
-    const panel = document.getElementById("captainManagement");
 
-    if (!panel) return;
+async function loadCaptainManagement(team) {
+  const panel = document.getElementById("captainManagement");
 
-    const session = localStorage.getItem("dychess_player_session");
+  if (!panel) return;
 
-    if (!session) return;
+  const session = localStorage.getItem("dychess_player_session");
 
-    try {
-      const result = await callTeamFunction({
-        action: "list_teams",
-        clubId: team.club_id
-      });
+  if (!session) return;
 
-      const authorizedTeam = (result.teams || []).find(
-        item => String(item.id) === String(team.id)
-      );
+  try {
+    const result = await callTeamFunction({
+      action: "list_teams",
+      clubId: team.club_id
+    });
 
-      // No team returned means this player is not authorized.
-      if (!authorizedTeam) return;
+    const authorizedTeam = (result.teams || []).find(
+      item => String(item.id) === String(team.id)
+    );
 
-      const requests = Array.isArray(authorizedTeam.requests)
-        ? authorizedTeam.requests
-        : [];
+    if (!authorizedTeam) return;
 
-      const requestHTML = requests.length
-        ? requests.map(request => {
-            const player = request.player || {};
+    const requests = Array.isArray(authorizedTeam.requests)
+      ? authorizedTeam.requests
+      : [];
 
-            const playerName =
-              player.display_name ||
-              player.lichess_username ||
-              ("Player " + request.player_id);
+    const members = Array.isArray(authorizedTeam.members)
+      ? authorizedTeam.members
+      : [];
 
-            return `
-              <div class="member" style="
-                display:flex;
-                flex-wrap:wrap;
-                align-items:center;
-                justify-content:space-between;
-                gap:12px;
-                padding:14px 0;
-                border-bottom:1px solid rgba(255,255,255,.1);
-              ">
-                <div>
-                  <strong>${escapeHTML(playerName)}</strong>
-                  <p class="muted">Team join request</p>
-                </div>
+    const memberHTML = members.length
+      ? members.map(member => {
+          const player = member.player || {};
 
-                <div style="display:flex;gap:8px;flex-wrap:wrap;">
-                  <button
-                    type="button"
-                    data-team-review="approve"
-                    data-request-id="${escapeHTML(request.id)}"
-                    style="cursor:pointer;padding:9px 14px;">
-                    Approve
-                  </button>
+          const playerName =
+            player.display_name ||
+            player.lichess_username ||
+            ("Player " + member.player_id);
 
-                  <button
-                    type="button"
-                    data-team-review="reject"
-                    data-request-id="${escapeHTML(request.id)}"
-                    style="cursor:pointer;padding:9px 14px;">
-                    Reject
-                  </button>
-                </div>
+          const isCaptain =
+            Number(team.captain_player_id) ===
+            Number(member.player_id);
+
+          return `
+            <div class="member" style="
+              display:flex;
+              flex-wrap:wrap;
+              align-items:center;
+              justify-content:space-between;
+              gap:12px;
+              padding:14px 0;
+              border-bottom:1px solid rgba(255,255,255,.1);
+            ">
+              <div>
+                <strong>${escapeHTML(playerName)}</strong>
+                ${isCaptain
+                  ? `<span class="captain-tag">♛ Captain</span>`
+                  : ""}
               </div>
-            `;
-          }).join("")
-        : `<p class="empty">There are no pending requests for this team.</p>`;
 
-      panel.innerHTML = `
-        <section class="section">
-          <h2>Team Management</h2>
+              ${!isCaptain ? `
+                <button
+                  type="button"
+                  class="danger"
+                  data-remove-member="${escapeHTML(member.id)}"
+                  style="cursor:pointer;padding:9px 14px;">
+                  Remove Member
+                </button>
+              ` : ""}
+            </div>
+          `;
+        }).join("")
+      : `<p class="empty">No approved team members yet.</p>`;
 
-          <p class="muted">
-            Review requests from players who want to join this team.
-          </p>
+    const requestHTML = requests.length
+      ? requests.map(request => {
+          const player = request.player || {};
 
-          <h3>Pending Join Requests (${requests.length})</h3>
+          const playerName =
+            player.display_name ||
+            player.lichess_username ||
+            ("Player " + request.player_id);
 
-          <div id="teamRequestList">
-            ${requestHTML}
-          </div>
+          return `
+            <div class="member" style="
+              display:flex;
+              flex-wrap:wrap;
+              align-items:center;
+              justify-content:space-between;
+              gap:12px;
+              padding:14px 0;
+              border-bottom:1px solid rgba(255,255,255,.1);
+            ">
+              <div>
+                <strong>${escapeHTML(playerName)}</strong>
+                <p class="muted">Team join request</p>
+              </div>
 
-          <p id="teamManagementMessage"
-             class="muted"
-             aria-live="polite"></p>
-        </section>
-      `;
+              <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                <button
+                  type="button"
+                  data-team-review="approve"
+                  data-request-id="${escapeHTML(request.id)}">
+                  Approve
+                </button>
 
-    } catch (error) {
-      // Ordinary visitors and non-captains should not see management controls.
-      if (
-        error.message !== "CAPTAIN_ACCESS_REQUIRED" &&
-        error.message !== "PLAYER_NOT_SIGNED_IN"
-      ) {
-        console.error("Team management:", error);
-      }
+                <button
+                  type="button"
+                  class="danger"
+                  data-team-review="reject"
+                  data-request-id="${escapeHTML(request.id)}">
+                  Reject
+                </button>
+              </div>
+            </div>
+          `;
+        }).join("")
+      : `<p class="empty">There are no pending requests for this team.</p>`;
+
+    panel.innerHTML = `
+      <section class="section">
+        <h2>Team Management</h2>
+
+        <p class="muted">
+          Manage members and review requests for this team.
+        </p>
+
+        <h3>Approved Team Members (${members.length})</h3>
+
+        <div id="managedTeamMembers">
+          ${memberHTML}
+        </div>
+
+        <h3>Pending Join Requests (${requests.length})</h3>
+
+        <div id="teamRequestList">
+          ${requestHTML}
+        </div>
+
+        <p id="teamManagementMessage"
+           class="muted"
+           aria-live="polite"></p>
+      </section>
+    `;
+
+  } catch (error) {
+    if (
+      error.message !== "CAPTAIN_ACCESS_REQUIRED" &&
+      error.message !== "PLAYER_NOT_SIGNED_IN"
+    ) {
+      console.error("Team management:", error);
     }
   }
+}
+
 
   // Handle captain approval and rejection actions.
   content.addEventListener("click", async event => {
