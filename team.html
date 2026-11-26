@@ -230,267 +230,464 @@
     </div>
   </main>
 
-  <script>
-    const SUPABASE_URL =
-      "https://rpfowuqlhboslhmvjelc.supabase.co";
+ 
+<script>
+  const SUPABASE_URL =
+    "https://rpfowuqlhboslhmvjelc.supabase.co";
 
-    const SUPABASE_KEY =
-      "sb_publishable_K5Fzinv7_Ac0gpaQc2C6Lg_3KstrDKY";
+  const SUPABASE_KEY =
+    "sb_publishable_K5Fzinv7_Ac0gpaQc2C6Lg_3KstrDKY";
 
-    const headers = {
-      "apikey": SUPABASE_KEY,
-      "Authorization": "Bearer " + SUPABASE_KEY
-    };
+  const headers = {
+    "apikey": SUPABASE_KEY,
+    "Authorization": "Bearer " + SUPABASE_KEY
+  };
 
-    const content = document.getElementById("content");
+  const content = document.getElementById("content");
 
-    function escapeHTML(value) {
-      return String(value ?? "").replace(/[&<>"']/g, character => ({
-        "&": "&amp;",
-        "<": "&lt;",
-        ">": "&gt;",
-        '"': "&quot;",
-        "'": "&#039;"
-      })[character]);
+  function escapeHTML(value) {
+    return String(value ?? "").replace(/[&<>"']/g, character => ({
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#039;"
+    })[character]);
+  }
+
+  function safeImageUrl(value) {
+    if (!value) return "";
+
+    try {
+      const url = new URL(value);
+
+      if (url.protocol === "https:" || url.protocol === "http:") {
+        return url.href;
+      }
+    } catch (_) {}
+
+    return "";
+  }
+
+  async function getRows(table, query) {
+    const response = await fetch(
+      `${SUPABASE_URL}/rest/v1/${table}?${query}`,
+      { headers }
+    );
+
+    if (!response.ok) {
+      throw new Error(`Could not load ${table}.`);
     }
 
-    function safeImageUrl(value) {
-      if (!value) return "";
+    return response.json();
+  }
 
-      try {
-        const url = new URL(value);
+  // Authenticated calls to the club-teams Edge Function.
+  async function callTeamFunction(payload) {
+    const session = localStorage.getItem("dychess_player_session");
 
-        if (url.protocol === "https:" || url.protocol === "http:") {
-          return url.href;
-        }
-      } catch (_) {}
-
-      return "";
+    if (!session) {
+      throw new Error("PLAYER_NOT_SIGNED_IN");
     }
 
-    async function getRows(table, query) {
-      const response = await fetch(
-        `${SUPABASE_URL}/rest/v1/${table}?${query}`,
-        { headers }
+    const response = await fetch(
+      `${SUPABASE_URL}/functions/v1/club-teams`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "apikey": SUPABASE_KEY,
+          "Authorization": "Bearer " + SUPABASE_KEY,
+          "x-dychess-session": session
+        },
+        body: JSON.stringify(payload)
+      }
+    );
+
+    const result = await response.json();
+
+    if (!response.ok || result.success === false) {
+      throw new Error(
+        result.error ||
+        result.message ||
+        "TEAM_REQUEST_FAILED"
+      );
+    }
+
+    return result;
+  }
+
+  function showError(title, message) {
+    content.innerHTML = `
+      <div class="error">
+        <h2>${escapeHTML(title)}</h2>
+        <p>${escapeHTML(message)}</p>
+        <a href="clubs.html">Return to Clubs</a>
+      </div>`;
+  }
+
+  async function loadTeam() {
+    const params = new URLSearchParams(window.location.search);
+    const teamId = params.get("id");
+
+    if (!teamId) {
+      showError(
+        "No team was specified",
+        "Please return to the club page and select a team."
+      );
+      return;
+    }
+
+    try {
+      const teams = await getRows(
+        "club_teams",
+        `select=id,club_id,name,description,logo_url,status,captain_player_id,created_at&id=eq.${encodeURIComponent(teamId)}&status=eq.active&limit=1`
       );
 
-      if (!response.ok) {
-        throw new Error(`Could not load ${table}.`);
-      }
-
-      return response.json();
-    }
-
-    function showError(title, message) {
-      content.innerHTML = `
-        <div class="error">
-          <h2>${escapeHTML(title)}</h2>
-          <p>${escapeHTML(message)}</p>
-          <a href="clubs.html">Return to Clubs</a>
-        </div>`;
-    }
-
-    async function loadTeam() {
-      const params = new URLSearchParams(window.location.search);
-      const teamId = params.get("id");
-
-      if (!teamId) {
+      if (!teams.length) {
         showError(
-          "No team was specified",
-          "Please return to the club page and select a team."
+          "Team not found",
+          "This team may not exist or may no longer be active."
         );
         return;
       }
 
-      try {
-        const teams = await getRows(
-          "club_teams",
-          `select=id,club_id,name,description,logo_url,status,captain_player_id,created_at&id=eq.${encodeURIComponent(teamId)}&status=eq.active&limit=1`
-        );
+      const team = teams[0];
 
-        if (!teams.length) {
-          showError(
-            "Team not found",
-            "This team may not exist or may no longer be active."
-          );
-          return;
-        }
+      const clubs = await getRows(
+        "clubs",
+        `select=id,name,slug,status&id=eq.${encodeURIComponent(team.club_id)}&status=eq.active&limit=1`
+      );
 
-        const team = teams[0];
-
-        const clubs = await getRows(
-          "clubs",
-          `select=id,name,slug,status&id=eq.${encodeURIComponent(team.club_id)}&status=eq.active&limit=1`
-        );
-
-        if (!clubs.length) {
-          showError(
-            "Club unavailable",
-            "The club associated with this team is not currently available."
-          );
-          return;
-        }
-
-        const club = clubs[0];
-
-        document.getElementById("backLink").href =
-          `club.html?slug=${encodeURIComponent(club.slug)}`;
-
-        document.getElementById("backLink").textContent =
-          "← " + club.name;
-
-        await renderTeam(team, club);
-
-      } catch (error) {
-        console.error(error);
-
+      if (!clubs.length) {
         showError(
-          "Unable to load team",
-          error.message || "Please try again later."
+          "Club unavailable",
+          "The club associated with this team is not currently available."
         );
+        return;
       }
+
+      const club = clubs[0];
+
+      document.getElementById("backLink").href =
+        `club.html?slug=${encodeURIComponent(club.slug)}`;
+
+      document.getElementById("backLink").textContent =
+        "← " + club.name;
+
+      await renderTeam(team, club);
+
+    } catch (error) {
+      console.error(error);
+
+      showError(
+        "Unable to load team",
+        error.message || "Please try again later."
+      );
+    }
+  }
+
+  async function renderTeam(team, club) {
+    const memberships = await getRows(
+      "club_team_memberships",
+      `select=player_id,status,reviewed_at&team_id=eq.${encodeURIComponent(team.id)}&status=eq.active`
+    );
+
+    const playerIds = [
+      ...new Set([
+        ...memberships.map(member => Number(member.player_id)),
+        ...(team.captain_player_id
+          ? [Number(team.captain_player_id)]
+          : [])
+      ])
+    ];
+
+    let players = [];
+
+    if (playerIds.length) {
+      players = await getRows(
+        "players",
+        `select=id,display_name,lichess_username&id=in.(${playerIds.join(",")})`
+      );
     }
 
-    async function renderTeam(team, club) {
-      const memberships = await getRows(
-        "club_team_memberships",
-        `select=player_id,status,reviewed_at&team_id=eq.${encodeURIComponent(team.id)}&status=eq.active`
-      );
+    const playerMap = new Map(
+      players.map(player => [String(player.id), player])
+    );
 
-      const playerIds = [
-        ...new Set([
-          ...memberships.map(member => Number(member.player_id)),
-          ...(team.captain_player_id
-            ? [Number(team.captain_player_id)]
-            : [])
-        ])
-      ];
+    const captain = team.captain_player_id
+      ? playerMap.get(String(team.captain_player_id))
+      : null;
 
-      let players = [];
+    const captainName = captain
+      ? (captain.display_name || captain.lichess_username)
+      : "Not yet appointed";
 
-      if (playerIds.length) {
-        players = await getRows(
-          "players",
-          `select=id,display_name,lichess_username&id=in.(${playerIds.join(",")})`
-        );
-      }
+    const logoUrl = safeImageUrl(team.logo_url);
 
-      const playerMap = new Map(
-        players.map(player => [String(player.id), player])
-      );
+    const createdDate = team.created_at
+      ? new Date(team.created_at).toLocaleDateString()
+      : "Not available";
 
-      const captain = team.captain_player_id
-        ? playerMap.get(String(team.captain_player_id))
-        : null;
+    const memberList = memberships
+      .map(member => {
+        const player = playerMap.get(String(member.player_id));
 
-      const captainName = captain
-        ? (captain.display_name || captain.lichess_username)
-        : "Not yet appointed";
+        return {
+          id: member.player_id,
+          name: player
+            ? (player.display_name || player.lichess_username)
+            : `Player ${member.player_id}`,
+          isCaptain:
+            String(member.player_id) ===
+            String(team.captain_player_id)
+        };
+      })
+      .sort((a, b) => {
+        if (a.isCaptain && !b.isCaptain) return -1;
+        if (!a.isCaptain && b.isCaptain) return 1;
+        return a.name.localeCompare(b.name);
+      });
 
-      const logoUrl = safeImageUrl(team.logo_url);
+    content.innerHTML = `
+      <section class="hero">
+        ${logoUrl
+          ? `<img class="logo" src="${escapeHTML(logoUrl)}" alt="Team logo">`
+          : `<div class="logo-placeholder">♟</div>`}
 
-      const createdDate = team.created_at
-        ? new Date(team.created_at).toLocaleDateString()
-        : "Not available";
+        <h1>${escapeHTML(team.name)}</h1>
 
-      const memberList = memberships
-        .map(member => {
-          const player = playerMap.get(String(member.player_id));
+        <p class="muted">
+          A team of ${escapeHTML(club.name)}
+        </p>
 
-          return {
-            id: member.player_id,
-            name: player
-              ? (player.display_name || player.lichess_username)
-              : `Player ${member.player_id}`,
-            isCaptain:
-              String(member.player_id) ===
-              String(team.captain_player_id)
-          };
-        })
-        .sort((a, b) => {
-          if (a.isCaptain && !b.isCaptain) return -1;
-          if (!a.isCaptain && b.isCaptain) return 1;
-          return a.name.localeCompare(b.name);
-        });
+        <p class="muted">
+          ${escapeHTML(team.description || "Welcome to this team.")}
+        </p>
 
-      content.innerHTML = `
-        <section class="hero">
-          ${logoUrl
-            ? `<img class="logo" src="${escapeHTML(logoUrl)}" alt="Team logo">`
-            : `<div class="logo-placeholder">♟</div>`}
+        <a class="club-link"
+           href="club.html?slug=${encodeURIComponent(club.slug)}">
+          View Club Profile
+        </a>
 
-          <h1>${escapeHTML(team.name)}</h1>
-
-          <p class="muted">
-            A team of ${escapeHTML(club.name)}
-          </p>
-
-          <p class="muted">
-            ${escapeHTML(team.description || "Welcome to this team.")}
-          </p>
-
-          <a class="club-link"
-             href="club.html?slug=${encodeURIComponent(club.slug)}">
-            View Club Profile
-          </a>
-
-          <div class="stats">
-            <div class="stat">
-              <strong>${memberships.length}</strong>
-              Active Members
-            </div>
-
-            <div class="stat">
-              <strong>${team.captain_player_id ? "1" : "0"}</strong>
-              Team Captain
-            </div>
-
-            <div class="stat">
-              <strong>${escapeHTML(createdDate)}</strong>
-              Team Created
-            </div>
+        <div class="stats">
+          <div class="stat">
+            <strong>${memberships.length}</strong>
+            Active Members
           </div>
-        </section>
 
-        <section class="section">
-          <h2>Team Captain</h2>
-
-          <div class="captain-card">
-            <div class="captain-icon">♛</div>
-            <div>
-              <strong>${escapeHTML(captainName)}</strong>
-              <span class="muted">
-                ${captain ? "Team Captain" : "No captain has been appointed yet"}
-              </span>
-            </div>
+          <div class="stat">
+            <strong>${team.captain_player_id ? "1" : "0"}</strong>
+            Team Captain
           </div>
-        </section>
 
-        <section class="section">
-          <h2>Team Members</h2>
+          <div class="stat">
+            <strong>${escapeHTML(createdDate)}</strong>
+            Team Created
+          </div>
+        </div>
+      </section>
 
-          <div id="teamMembers">
-            ${memberList.length
-              ? memberList.map(member => `
-                  <div class="member">
-                    <div>
-                      <strong>${escapeHTML(member.name)}</strong>
-                      <span class="muted"></span>
-                    </div>
+      <section class="section">
+        <h2>Team Captain</h2>
 
-                    ${member.isCaptain
-                      ? `<span class="captain-tag">♛ Captain</span>`
-                      : ""}
+        <div class="captain-card">
+          <div class="captain-icon">♛</div>
+          <div>
+            <strong>${escapeHTML(captainName)}</strong>
+            <span class="muted">
+              ${captain ? "Team Captain" : "No captain has been appointed yet"}
+            </span>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <h2>Team Members</h2>
+
+        <div id="teamMembers">
+          ${memberList.length
+            ? memberList.map(member => `
+                <div class="member">
+                  <div>
+                    <strong>${escapeHTML(member.name)}</strong>
+                    <span class="muted"></span>
                   </div>
-                `).join("")
-              : `<p class="empty">This team has no active members yet.</p>`
-            }
+
+                  ${member.isCaptain
+                    ? `<span class="captain-tag">♛ Captain</span>`
+                    : ""}
+                </div>
+              `).join("")
+            : `<p class="empty">This team has no active members yet.</p>`
+          }
+        </div>
+      </section>
+
+      <div id="captainManagement"></div>
+    `;
+
+    // Show management controls only to an authorized organizer or captain.
+    await loadCaptainManagement(team);
+  }
+
+  async function loadCaptainManagement(team) {
+    const panel = document.getElementById("captainManagement");
+
+    if (!panel) return;
+
+    const session = localStorage.getItem("dychess_player_session");
+
+    if (!session) return;
+
+    try {
+      const result = await callTeamFunction({
+        action: "list_teams",
+        clubId: team.club_id
+      });
+
+      const authorizedTeam = (result.teams || []).find(
+        item => String(item.id) === String(team.id)
+      );
+
+      // No team returned means this player is not authorized.
+      if (!authorizedTeam) return;
+
+      const requests = Array.isArray(authorizedTeam.requests)
+        ? authorizedTeam.requests
+        : [];
+
+      const requestHTML = requests.length
+        ? requests.map(request => {
+            const player = request.player || {};
+
+            const playerName =
+              player.display_name ||
+              player.lichess_username ||
+              ("Player " + request.player_id);
+
+            return `
+              <div class="member" style="
+                display:flex;
+                flex-wrap:wrap;
+                align-items:center;
+                justify-content:space-between;
+                gap:12px;
+                padding:14px 0;
+                border-bottom:1px solid rgba(255,255,255,.1);
+              ">
+                <div>
+                  <strong>${escapeHTML(playerName)}</strong>
+                  <p class="muted">Team join request</p>
+                </div>
+
+                <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                  <button
+                    type="button"
+                    data-team-review="approve"
+                    data-request-id="${escapeHTML(request.id)}"
+                    style="cursor:pointer;padding:9px 14px;">
+                    Approve
+                  </button>
+
+                  <button
+                    type="button"
+                    data-team-review="reject"
+                    data-request-id="${escapeHTML(request.id)}"
+                    style="cursor:pointer;padding:9px 14px;">
+                    Reject
+                  </button>
+                </div>
+              </div>
+            `;
+          }).join("")
+        : `<p class="empty">There are no pending requests for this team.</p>`;
+
+      panel.innerHTML = `
+        <section class="section">
+          <h2>Team Management</h2>
+
+          <p class="muted">
+            Review requests from players who want to join this team.
+          </p>
+
+          <h3>Pending Join Requests (${requests.length})</h3>
+
+          <div id="teamRequestList">
+            ${requestHTML}
           </div>
+
+          <p id="teamManagementMessage"
+             class="muted"
+             aria-live="polite"></p>
         </section>
       `;
+
+    } catch (error) {
+      // Ordinary visitors and non-captains should not see management controls.
+      if (
+        error.message !== "CAPTAIN_ACCESS_REQUIRED" &&
+        error.message !== "PLAYER_NOT_SIGNED_IN"
+      ) {
+        console.error("Team management:", error);
+      }
+    }
+  }
+
+  // Handle captain approval and rejection actions.
+  content.addEventListener("click", async event => {
+    const button = event.target.closest("[data-team-review]");
+
+    if (!button) return;
+
+    const decision = button.dataset.teamReview;
+    const requestId = button.dataset.requestId;
+
+    if (!requestId || !["approve", "reject"].includes(decision)) {
+      return;
     }
 
-    loadTeam();
-  </script>
+    const message = document.getElementById("teamManagementMessage");
+
+    button.disabled = true;
+    button.textContent = "Please wait...";
+
+    if (message) {
+      message.textContent = "Processing request...";
+    }
+
+    try {
+      const result = await callTeamFunction({
+        action: "review_request",
+        requestId,
+        decision
+      });
+
+      alert(
+        result.message ||
+        (decision === "approve"
+          ? "Player has joined the team."
+          : "Team join request rejected.")
+      );
+
+      await loadTeam();
+
+    } catch (error) {
+      console.error(error);
+
+      if (message) {
+        message.textContent =
+          error.message || "Unable to process this request.";
+      }
+
+      button.disabled = false;
+      button.textContent =
+        decision === "approve" ? "Approve" : "Reject";
+    }
+  });
+
+  loadTeam();
+</script>
+
 </body>
 </html>
