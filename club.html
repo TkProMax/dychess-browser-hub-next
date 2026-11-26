@@ -855,9 +855,15 @@
           });
         });
 
-        matches.forEach(match => {
-          const team = standings.get(String(match.team_id));
+       matches.forEach(match => {
+  if (
+    !match.opponent_team_id ||
+    String(match.team_id) === String(match.opponent_team_id)
+  ) {
+    return;
+  }
 
+  const team = standings.get(String(match.team_id));
           if (!team) return;
 
           team.played += 1;
