@@ -5,6 +5,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Club | DYCHESS</title>
+
   <style>
     :root {
       --bg: #07140e;
@@ -123,21 +124,30 @@
       display: inline-block;
       border: 0;
       border-radius: 8px;
-      padding: 13px 24px;
+      padding: 11px 18px;
       background: var(--gold);
       color: #07140e;
-      font-size: 15px;
+      font-size: 14px;
       font-weight: 800;
       cursor: pointer;
+      margin-top: 10px;
     }
 
-    .join-button:hover {
-      background: #edca76;
-    }
+    .join-button:hover { background: #edca76; }
 
     .join-button:disabled {
       opacity: .65;
       cursor: not-allowed;
+    }
+
+    .secondary-button {
+      background: transparent;
+      border: 1px solid var(--gold);
+      color: var(--gold);
+    }
+
+    .secondary-button:hover {
+      background: rgba(217,180,91,.1);
     }
 
     #joinMessage {
@@ -157,6 +167,17 @@
     .item strong {
       display: block;
       margin-bottom: 5px;
+    }
+
+    .team-status {
+      margin-top: 10px;
+      padding: 12px;
+      background: rgba(0,0,0,.2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.6;
     }
 
     .empty {
@@ -183,6 +204,7 @@
     }
   </style>
 </head>
+
 <body>
   <main class="container">
     <div class="top">
@@ -205,6 +227,8 @@
     const content = document.getElementById("content");
 
     let currentClub = null;
+    let currentTeamStatus = null;
+    let currentTeams = [];
 
     function escapeHTML(value) {
       return String(value ?? "").replace(/[&<>"']/g, character => ({
@@ -231,11 +255,52 @@
 
     function loginToJoin() {
       const slug = new URLSearchParams(window.location.search).get("slug");
-
-      const nextPage = `club.html?slug=${slug}`;
+      const nextPage = `club.html?slug=${encodeURIComponent(slug || "")}`;
 
       window.location.href =
         "player-login.html?next=" + encodeURIComponent(nextPage);
+    }
+
+    async function callClubTeams(action, extra = {}) {
+      const session = localStorage.getItem("dychess_player_session");
+
+      if (!session) {
+        loginToJoin();
+        throw new Error("Please sign in to continue.");
+      }
+
+      const response = await fetch(
+        `${SUPABASE_URL}/functions/v1/club-teams`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "apikey": SUPABASE_KEY,
+            "Authorization": "Bearer " + SUPABASE_KEY,
+            "x-dychess-session": session
+          },
+          body: JSON.stringify({
+            action,
+            ...extra
+          })
+        }
+      );
+
+      let data = {};
+
+      try {
+        data = await response.json();
+      } catch (_) {
+        data = {};
+      }
+
+      if (!response.ok) {
+        throw new Error(
+          data.error || data.message || "The team request could not be completed."
+        );
+      }
+
+      return data;
     }
 
     async function requestToJoin() {
@@ -331,12 +396,87 @@
 
       } catch (error) {
         console.error(error);
-
         message.textContent =
           error.message || "Something went wrong. Please try again.";
 
         button.disabled = false;
         button.textContent = "Request to Join";
+      }
+    }
+
+    async function loadMyTeamStatus(clubId) {
+      currentTeamStatus = null;
+
+      const session = localStorage.getItem("dychess_player_session");
+
+      if (!session) return;
+
+      try {
+        currentTeamStatus = await callClubTeams("my_status", {
+          clubId
+        });
+      } catch (error) {
+        console.error("Could not load player team status:", error);
+        currentTeamStatus = {
+          success: false,
+          error: error.message
+        };
+      }
+    }
+
+    async function requestToJoinTeam(teamId, button) {
+      if (!currentClub || !button) return;
+
+      button.disabled = true;
+      button.textContent = "Submitting...";
+
+      try {
+        const data = await callClubTeams("request_join", {
+          teamId
+        });
+
+        if (data.success === false) {
+          throw new Error(data.error || data.message || "Request failed.");
+        }
+
+        await loadTeams(currentClub.id);
+
+      } catch (error) {
+        console.error(error);
+
+        alert(error.message || "Could not submit your team request.");
+
+        button.disabled = false;
+        button.textContent = "Request to Join Team";
+      }
+    }
+
+    async function leaveTeam(membershipId, button) {
+      if (!confirm("Are you sure you want to leave this team?")) {
+        return;
+      }
+
+      button.disabled = true;
+      button.textContent = "Leaving...";
+
+      try {
+        const data = await callClubTeams("leave_team", {
+          membershipId
+        });
+
+        if (data.success === false) {
+          throw new Error(data.error || data.message || "Could not leave team.");
+        }
+
+        await loadTeams(currentClub.id);
+
+      } catch (error) {
+        console.error(error);
+
+        alert(error.message || "Could not leave the team.");
+
+        button.disabled = false;
+        button.textContent = "Leave Team";
       }
     }
 
@@ -419,6 +559,9 @@
 
           <section class="section">
             <h2>Club Teams</h2>
+            <p class="muted">
+              Approved club members can request to join a team. You can belong to one team at a time.
+            </p>
             <div id="teams"><p class="empty">Loading teams...</p></div>
           </section>
 
@@ -499,15 +642,101 @@
           `select=id,name,description,status&club_id=eq.${clubId}&status=eq.active&order=created_at.desc`
         );
 
+        currentTeams = teams;
+
         document.getElementById("teamCount").textContent = teams.length;
 
-        target.innerHTML = teams.length
-          ? teams.map(team => `
-              <div class="item">
-                <strong>${escapeHTML(team.name)}</strong>
-                <span class="muted">${escapeHTML(team.description || "Club team")}</span>
-              </div>`).join("")
-          : '<p class="empty">This club has not created any teams yet.</p>';
+        await loadMyTeamStatus(clubId);
+
+        if (!teams.length) {
+          target.innerHTML = '<p class="empty">This club has not created any teams yet.</p>';
+          return;
+        }
+
+        const loggedIn = !!localStorage.getItem("dychess_player_session");
+
+        const status = currentTeamStatus;
+        const clubApproved =
+          status && status.success && status.clubMembershipStatus === "approved";
+
+        const memberships =
+          status && status.success && Array.isArray(status.memberships)
+            ? status.memberships
+            : [];
+
+        const activeMembership = memberships.find(m => m.status === "active");
+        const pendingMembership = memberships.find(m => m.status === "pending");
+
+        target.innerHTML = teams.map(team => {
+          const membership = memberships.find(
+            m => String(m.team_id) === String(team.id)
+          );
+
+          let controls = "";
+
+          if (!loggedIn) {
+            controls = `
+              <p class="team-status">
+                Sign in with Lichess and become an approved club member to request this team.
+              </p>
+              <button class="join-button" onclick="loginToJoin()">
+                Sign In to Join
+              </button>`;
+          } else if (!status || !status.success) {
+            controls = `
+              <p class="team-status">
+                Your team status could not be checked. Please refresh the page or sign in again.
+              </p>`;
+          } else if (!clubApproved) {
+            controls = `
+              <p class="team-status">
+                You must first become an approved member of this club before joining a team.
+              </p>`;
+          } else if (membership && membership.status === "active") {
+            controls = `
+              <p class="team-status">
+                You are an active member of this team.
+              </p>
+              <button
+                class="join-button secondary-button"
+                onclick="leaveTeam('${escapeHTML(membership.id)}', this)">
+                Leave Team
+              </button>`;
+          } else if (membership && membership.status === "pending") {
+            controls = `
+              <p class="team-status">
+                Your request to join this team is awaiting approval from the organizer or team captain.
+              </p>`;
+          } else if (activeMembership) {
+            const activeTeam = activeMembership.team;
+            controls = `
+              <p class="team-status">
+                You currently belong to ${escapeHTML(activeTeam?.name || "another team")}.
+                Leave that team before requesting to join another one.
+              </p>`;
+          } else if (pendingMembership) {
+            const pendingTeam = pendingMembership.team;
+            controls = `
+              <p class="team-status">
+                You already have a pending request for ${escapeHTML(pendingTeam?.name || "another team")}.
+                Wait for a decision before requesting another team.
+              </p>`;
+          } else {
+            controls = `
+              <button
+                class="join-button"
+                onclick="requestToJoinTeam('${escapeHTML(team.id)}', this)">
+                Request to Join Team
+              </button>`;
+          }
+
+          return `
+            <div class="item">
+              <strong>${escapeHTML(team.name)}</strong>
+              <span class="muted">${escapeHTML(team.description || "Club team")}</span>
+              ${controls}
+            </div>`;
+        }).join("");
 
       } catch (error) {
         console.error(error);
