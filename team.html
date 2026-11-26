@@ -739,6 +739,53 @@ async function loadCaptainManagement(team) {
     }
   });
 
+  // Handle removal of an existing team member.
+  content.addEventListener("click", async event => {
+    const button = event.target.closest("[data-remove-member]");
+
+    if (!button) return;
+
+    const membershipId = button.dataset.removeMember;
+
+    if (!membershipId) return;
+
+    const confirmed = confirm(
+      "Are you sure you want to remove this player from the team? Their DYCHESS account and club membership will remain intact."
+    );
+
+    if (!confirmed) return;
+
+    button.disabled = true;
+    button.textContent = "Removing...";
+
+    const message = document.getElementById("teamManagementMessage");
+
+    try {
+      const result = await callTeamFunction({
+        action: "remove_member",
+        membershipId
+      });
+
+      if (message) {
+        message.textContent =
+          result.message || "Member removed successfully.";
+      }
+
+      await loadTeam();
+
+    } catch (error) {
+      console.error("Remove member error:", error);
+
+      if (message) {
+        message.textContent =
+          error.message || "Could not remove this member.";
+      }
+
+      button.disabled = false;
+      button.textContent = "Remove Member";
+    }
+  });
+
   loadTeam();
 </script>
 
