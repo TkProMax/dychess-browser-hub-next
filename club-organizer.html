@@ -381,14 +381,18 @@ async function loadOrganizer() {
   }
 
   try {
-    const result = await callFunction("club-organizers",{action:"status"});
+   let result = await callFunction("club-organizers",{action:"status"});
 
-    if (!result.registered) {
-      showMessage("This Lichess account is not registered as a club organizer.");
-      document.getElementById("welcomeText").textContent =
-        "Organizer registration required.";
-      return;
-    }
+   if (!result.registered) {
+  result = await callFunction("club-organizers", {
+    action: "register"
+  });
+
+  if (!result.registered) {
+    showMessage(result.error || "Organizer registration could not be completed.");
+    return;
+  }
+}
 
     const organizer = result.organizer || {};
     document.getElementById("welcomeText").textContent =
