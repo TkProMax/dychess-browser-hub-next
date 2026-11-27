@@ -1504,6 +1504,148 @@ async function openClubTournamentRegistration(tournamentId, button) {
   }
 }
 
+  
+async function manageClubTournamentApplicants(tournamentId) {
+  const target = document.getElementById("tournaments");
+
+  try {
+    const data = await callClubTournaments(
+      "list_tournament_applicants",
+      { tournamentId }
+    );
+
+    const applicants = data.applicants || [];
+
+    const panelId = "applicants-" + tournamentId;
+
+    let panel = document.getElementById(panelId);
+
+    if (!panel) {
+      panel = document.createElement("div");
+      panel.id = panelId;
+      panel.className = "item";
+      target.appendChild(panel);
+    }
+
+    panel.innerHTML = `
+      <h3>${escapeHTML(data.tournament.name)} — Applicants</h3>
+      <p class="muted">
+        Total applications: ${applicants.length}
+      </p>
+
+      ${applicants.length
+        ? applicants.map(applicant => {
+            const playerName =
+              applicant.player?.display_name ||
+              applicant.player?.lichess_username ||
+              "Player " + applicant.player_id;
+
+            const username =
+              applicant.player?.lichess_username || "";
+
+            return `
+              <div class="item">
+                <strong>${escapeHTML(playerName)}</strong>
+
+                <p class="muted">
+                  ${escapeHTML(username)}
+                  · ${escapeHTML(applicant.status)}
+                  ${applicant.seed_number
+                    ? " · Seed " + applicant.seed_number
+                    : ""}
+                </p>
+
+                ${applicant.status === "pending"
+                  ? `
+                    <label>Seed number</label>
+                    <input
+                      type="number"
+                      min="1"
+                      max="500"
+                      id="seed-${applicant.id}"
+                      placeholder="Enter seed number"
+                    >
+
+                    <button class="join-button"
+                      onclick="reviewClubTournamentApplicant(
+                        '${tournamentId}',
+                        '${applicant.id}',
+                        'approved'
+                      )">
+                      Approve
+                    </button>
+
+                    <button class="join-button secondary-button"
+                      onclick="reviewClubTournamentApplicant(
+                        '${tournamentId}',
+                        '${applicant.id}',
+                        'rejected'
+                      )">
+                      Reject
+                    </button>
+                  `
+                  : ""}
+              </div>
+            `;
+          }).join("")
+        : '<p class="empty">No applications yet.</p>'
+      }
+    `;
+
+    panel.scrollIntoView({ behavior: "smooth", block: "start" });
+
+  } catch (error) {
+    alert(error.message || "Could not load tournament applicants.");
+  }
+}
+
+
+async function reviewClubTournamentApplicant(
+  tournamentId,
+  applicantId,
+  decision
+) {
+  let seedNumber = null;
+
+  if (decision === "approved") {
+    const seedInput = document.getElementById(
+      "seed-" + applicantId
+    );
+
+    seedNumber = Number(seedInput?.value);
+
+    if (!Number.isInteger(seedNumber) || seedNumber < 1 || seedNumber > 500) {
+      alert("Please enter a valid seed number between 1 and 500.");
+      return;
+    }
+  }
+
+  const message = decision === "approved"
+    ? `Approve this player with seed number ${seedNumber}?`
+    : "Are you sure you want to reject this application?";
+
+  if (!confirm(message)) return;
+
+  try {
+    const result = await callClubTournaments(
+      "review_tournament_applicant",
+      {
+        tournamentId,
+        applicantId,
+        decision,
+        seedNumber
+      }
+    );
+
+    alert(result.message || "Applicant review completed.");
+
+    await manageClubTournamentApplicants(tournamentId);
+
+  } catch (error) {
+    alert(error.message || "Could not review this applicant.");
+  }
+}
+
     loadClub();
   </script>
 </body>
