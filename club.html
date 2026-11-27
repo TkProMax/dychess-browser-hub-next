@@ -1316,6 +1316,7 @@ async function loadPlayerStatistics(clubId) {
 
 
 
+
 async function loadTournaments(clubId) {
   const target = document.getElementById("tournaments");
 
@@ -1325,6 +1326,7 @@ async function loadTournaments(clubId) {
     });
 
     const tournaments = data.tournaments || [];
+    const registrations = data.registrations || [];
 
     const organizer = await callClubOrganizerStatus();
 
@@ -1350,11 +1352,33 @@ async function loadTournaments(clubId) {
           const status = statusLabels[tournament.status] ||
             tournament.status;
 
+          const playerRegistration = registrations.find(
+            registration =>
+              String(registration.tournament_id) ===
+              String(tournament.id)
+          );
+
           const canRegister =
-            tournament.status === "registration_open";
+            tournament.status === "registration_open" &&
+            !playerRegistration;
 
           const canOpenRegistration =
             canManage && tournament.status === "draft";
+
+          let registrationStatus = "";
+
+          if (playerRegistration) {
+            const registrationLabels = {
+              pending: "Registration Pending",
+              approved: "Registered",
+              rejected: "Registration Rejected",
+              withdrawn: "Registration Withdrawn"
+            };
+
+            registrationStatus =
+              registrationLabels[playerRegistration.status] ||
+              "Registration Submitted";
+          }
 
           return `
             <div class="item">
@@ -1392,6 +1416,10 @@ async function loadTournaments(clubId) {
                     onclick="registerForClubTournament('${escapeHTML(tournament.id)}')">
                     Register for Tournament
                    </button>`
+                : ""}
+
+              ${registrationStatus
+                ? `<p class="muted">${escapeHTML(registrationStatus)}</p>`
                 : ""}
             </div>
           `;
