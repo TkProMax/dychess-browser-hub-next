@@ -1315,7 +1315,7 @@ async function loadPlayerStatistics(clubId) {
 }
 
 
- 
+
 async function loadTournaments(clubId) {
   const target = document.getElementById("tournaments");
 
@@ -1325,6 +1325,13 @@ async function loadTournaments(clubId) {
     });
 
     const tournaments = data.tournaments || [];
+
+    const organizer = await callClubOrganizerStatus();
+
+    const canManage =
+      organizer &&
+      currentClub &&
+      String(organizer.id) === String(currentClub.organizer_id);
 
     document.getElementById("tournamentCount").textContent =
       tournaments.length;
@@ -1345,6 +1352,9 @@ async function loadTournaments(clubId) {
 
           const canRegister =
             tournament.status === "registration_open";
+
+          const canOpenRegistration =
+            canManage && tournament.status === "draft";
 
           return `
             <div class="item">
@@ -1370,8 +1380,16 @@ async function loadTournaments(clubId) {
                 ? `<p class="muted">Maximum players: ${tournament.max_players}</p>`
                 : ""}
 
+              ${canOpenRegistration
+                ? `<button class="join-button"
+                    onclick="openClubTournamentRegistration('${escapeHTML(tournament.id)}', this)">
+                    Open Registration
+                   </button>`
+                : ""}
+
               ${canRegister
-                ? `<button class="btn" onclick="registerForClubTournament('${tournament.id}')">
+                ? `<button class="join-button"
+                    onclick="registerForClubTournament('${escapeHTML(tournament.id)}')">
                     Register for Tournament
                    </button>`
                 : ""}
@@ -1392,6 +1410,7 @@ async function loadTournaments(clubId) {
     `;
   }
 }
+
 
   async function registerForClubTournament(tournamentId) {
   const confirmed = confirm(
@@ -1420,6 +1439,35 @@ async function loadTournaments(clubId) {
     );
   }
 }
+    
+async function openClubTournamentRegistration(tournamentId, button) {
+  if (!confirm("Open registration for this tournament? Players will be able to apply.")) {
+    return;
+  }
+
+  button.disabled = true;
+  button.textContent = "Opening...";
+
+  try {
+    const result = await callClubTournaments(
+      "open_registration",
+      {
+        tournamentId
+      }
+    );
+
+    alert(result.message || "Tournament registration is now open.");
+
+    await loadTournaments(currentClub.id);
+
+  } catch (error) {
+    alert(error.message || "Could not open tournament registration.");
+
+    button.disabled = false;
+    button.textContent = "Open Registration";
+  }
+}
+
     loadClub();
   </script>
 </body>
