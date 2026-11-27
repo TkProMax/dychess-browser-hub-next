@@ -1411,6 +1411,14 @@ async function loadTournaments(clubId) {
                    </button>`
                 : ""}
 
+                   ${canManage &&
+                ["registration_open", "registration_closed"].includes(tournament.status)
+                ? `<button class="join-button secondary-button"
+                    onclick="manageClubTournamentApplicants('${escapeHTML(tournament.id)}')">
+                    Manage Applicants
+                   </button>`
+                : ""}
+
               ${canRegister
                 ? `<button class="join-button"
                     onclick="registerForClubTournament('${escapeHTML(tournament.id)}')">
